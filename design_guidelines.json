@@ -1,0 +1,119 @@
+{
+  "theme": "light",
+  "typography": {
+    "headings": {
+      "family": "Cormorant Garamond, serif",
+      "weights": ["400", "600", "700"],
+      "usage": "Used for all page titles, section headers, and prominent metric numbers. Brings a sense of reverence, tradition, and warmth."
+    },
+    "body": {
+      "family": "Manrope, sans-serif",
+      "weights": ["400", "500", "600"],
+      "usage": "Used for all UI elements, forms, feed content, and admin tables. Provides modern, clean legibility."
+    },
+    "rules": [
+      "H1 size max text-4xl to text-5xl with tracking-tight.",
+      "Never use Inter for headings.",
+      "Use tracking-[0.2em] uppercase for overlines/labels (e.g., 'MURAL DE ORAÇÃO').",
+      "Maintain a 2-step tailwind scale gap between headings and subheadings."
+    ]
+  },
+  "colors": {
+    "archetype": "ORGANIC & EARTHY",
+    "philosophy": "Conveys trust, spiritual growth, and calm. Avoids clinical 'SaaS blue'.",
+    "palette": {
+      "background": "#F9F8F6",
+      "surface": "#FFFFFF",
+      "surface_alt": "#F2EFEB",
+      "primary": "#1A4331",
+      "primary_hover": "#2C5B45",
+      "secondary": "#7A9E7E",
+      "accent": "#C06E52",
+      "accent_hover": "#A65B42",
+      "text_primary": "#1C1C1C",
+      "text_secondary": "#595959",
+      "border": "#E5E3DF"
+    },
+    "rules": [
+      "No full-screen gradients.",
+      "Use accent color (#C06E52) strictly for emotional triggers like the 'Orando por você' button.",
+      "Tint all neutral grays with a hint of warm orange/yellow to match the background."
+    ]
+  },
+  "visual_enhancers": {
+    "surfaces": "Use flat solid backgrounds. Avoid glassmorphism to keep the UI grounded and accessible.",
+    "shadows": "Use soft ambient shadows: shadow-[0_8px_30px_rgb(0,0,0,0.04)] for floating elements (like dropdowns). Feed cards should rely on borders, not shadows.",
+    "borders": "1px solid #E5E3DF. Sharp inner contrast.",
+    "radius": "rounded-2xl for main content cards (feed items), rounded-full for buttons and pills.",
+    "textures": "Subtle noise overlay (opacity-5) on the main background can add a tactile, paper-like feel."
+  },
+  "grids_and_layouts": {
+    "global": "Generous spacing. Use p-6, p-8, or p-12 for container paddings.",
+    "feed_pages": "Progressive disclosure layout. Main canvas for the feed (col-span-12 md:col-span-8), with a sticky right rail for highlights, filters, or 'Upcoming Events' (md:col-span-4). gap-8.",
+    "admin_dashboard": "High Density Grid. Tight gaps (gap-4). Cardless, rectangular, dense styles using Shadcn tables.",
+    "agenda": "Bento Grid style for events. Emphasize the date using large typography (e.g., Day in H2, Month in overline).",
+    "auth_page": "Split screen. 50% image with bg-black/20 overlay, 50% minimalist login form centered."
+  },
+  "components": {
+    "prayer_feed_card": "Cardless or subtle border. Author at top, bold text for request, bottom action bar with '🙏 Orando por você' button (changes to solid accent color when clicked) and counter.",
+    "event_card": "Visual tension. Left side contains large date (e.g., '24 Out'), right side contains title, time, and location.",
+    "contribution_section": "Split view. Left: PIX QR Code and bank details with a prominent 'Copiar Chave' button. Right: Form to log the contribution for admin review.",
+    "navigation": "Solid background (#FFFFFF) top bar or sidebar. No transparent headers. Clearly visible links."
+  },
+  "motion": {
+    "interactions": "Hover states must have a slight lift (-translate-y-1) and color shift. Focus states must have a 2px ring of primary color.",
+    "feed_load": "Staggered fade-in (opacity and slight Y translation) for feed items to make it feel organic.",
+    "buttons": "Active (click) state should scale down slightly (scale-95) for tactile feedback."
+  },
+  "accessibility": {
+    "contrast": "Ensure all text meets at least 4.5:1 ratio against #F9F8F6.",
+    "focus": "Visible focus rings on all inputs and buttons. Never rely on color alone.",
+    "testing": "MANDATORY: Add 'data-testid' to all interactive elements (e.g., data-testid='login-btn', data-testid='pray-btn', data-testid='copy-pix-btn')."
+  },
+  "icons": {
+    "library": "lucide-react",
+    "usage": "Use icons sparingly. Prefer text labels. Use icons for actions like copy, edit, delete, and the prayer hands."
+  },
+  "image_urls": {
+    "auth_background": {
+      "url": "https://images.pexels.com/photos/14530767/pexels-photo-14530767.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Gathered in prayer at a modern indoor church setting. Use as full height background on the login/register split screen."
+    },
+    "prayer_wall_header": {
+      "url": "https://images.unsplash.com/photo-1649514829172-07d9bdcb4b72?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzB8MHwxfHNlYXJjaHw0fHxwcmF5aW5nJTIwaGFuZHMlMjBzaWxob3VldHRlfGVufDB8fHx8MTc4NjE4NTQ4NHww&ixlib=rb-4.1.0&q=85",
+      "description": "Close up of person holding hands together. Use as a subtle banner or hero image for the Prayer Wall."
+    },
+    "testimony_wall_header": {
+      "url": "https://images.unsplash.com/photo-1503424160383-57de83bd6fb2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzl8MHwxfHNlYXJjaHwxfHxwZWFjZWZ1bCUyMG5hdHVyZSUyMGxhbmRzY2FwZSUyMGRhd258ZW58MHx8fHwxNzg2MTg1NDg0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Tree against golden sun. Use as a hopeful, bright banner for the Testimony Wall."
+    }
+  },
+  "instructions_to_main_agent": [
+    "Build the application exclusively in Portuguese (pt-BR).",
+    "Implement JWT-based authentication flow for members and admin.",
+    "Use Shadcn UI components heavily customized with the Organic & Earthy palette. Strip away any default 'Vercel/SaaS' look.",
+    "For the 'Orando por você' feature, create an optimistic UI update (increment counter immediately) while saving to backend.",
+    "In the Admin panel, implement tabs or a sidebar to separate: Aprovação de Posts, Gestão de Eventos, Gestão de Contribuições, and Sugestões de Eventos.",
+    "The Contributions feature requires both an informational display (PIX/Bank details) and a functional form for users to log their manual offerings/tithes for record-keeping.",
+    "Use 'sonner' for all toast notifications (e.g., 'Chave PIX copiada', 'Oração enviada', 'Post aprovado').",
+    "Ensure the Church Agenda allows members to view upcoming events and includes a button/modal for them to suggest new events to the admin."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "You tend to converge toward generic, 'on distribution' outputs. In frontend design, this creates what users call the 'AI slop' aesthetic. Avoid this: make creative, distinctive frontends that surprise and delight.",
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "You MUST NOT apply universal transition. Eg: 'transition: all'. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms.",
+    "You MUST NOT center align the app container, ie do not add '.App { text-align: center; }' in the css file. This disrupts the human natural reading flow of text.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style.",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN.",
+    "Prioritize using pre-existing components from src/components/ui when applicable.",
+    "Create new components that match the style and conventions of existing components when needed.",
+    "Use 'sonner' for toasts. Sonner component is located in /app/src/components/ui/sonner.tsx or equivalent.",
+    "All interactive and key informational elements MUST include a 'data-testid' attribute to facilitate robust automated testing."
+  ]
+}
