@@ -51,11 +51,19 @@ def create_refresh_token(user_id: str) -> str:
     return jwt.encode(payload, get_jwt_secret(), algorithm=JWT_ALGORITHM)
 
 
+def _is_local() -> bool:
+    return "localhost" in os.environ.get("FRONTEND_URL", "") or "127.0.0.1" in os.environ.get("FRONTEND_URL", "")
+
+
+def _cookie_kwargs() -> dict:
+    if _is_local():
+        return {"httponly": True, "secure": False, "samesite": "lax", "path": "/"}
+    return {"httponly": True, "secure": True, "samesite": "none", "path": "/"}
+
+
 def set_auth_cookies(response: Response, user_id: str):
-    response.set_cookie("access_token", create_access_token(user_id), httponly=True,
-                        secure=True, samesite="none", max_age=8 * 3600, path="/")
-    response.set_cookie("refresh_token", create_refresh_token(user_id), httponly=True,
-                        secure=True, samesite="none", max_age=7 * 86400, path="/")
+    response.set_cookie("access_token", create_access_token(user_id), max_age=8 * 3600, **_cookie_kwargs())
+    response.set_cookie("refresh_token", create_refresh_token(user_id), max_age=7 * 86400, **_cookie_kwargs())
 
 
 def public_user(user: dict) -> dict:
@@ -204,8 +212,7 @@ async def refresh(request: Request, response: Response):
     user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
     if not user:
         raise HTTPException(401, "Usuário não encontrado")
-    response.set_cookie("access_token", create_access_token(user["id"]), httponly=True,
-                        secure=True, samesite="none", max_age=8 * 3600, path="/")
+    response.set_cookie("access_token", create_access_token(user["id"]), max_age=8 * 3600, **_cookie_kwargs())
     return public_user(user)
 
 
