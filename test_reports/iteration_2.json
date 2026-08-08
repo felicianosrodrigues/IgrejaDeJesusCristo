@@ -1,0 +1,22 @@
+{
+  "summary": "Regressão focada em auth após mudança no set_auth_cookies/_cookie_kwargs e /api/auth/refresh. Ambiente preview (FRONTEND_URL=https prod URL) => modo produção: cookies devem permanecer Secure=True, SameSite=None, HttpOnly=True. TESTES BACKEND (novo arquivo test_auth_cookies_regression.py): 6/6 PASS — login seta cookies com Secure+SameSite=None+HttpOnly+Path=/, /auth/me via cookies OK, /auth/refresh renova access_token via cookie refresh_token e mantém mesmos atributos, /auth/refresh sem cookie => 401, /auth/register seta cookies e /me retorna role=member, logout limpa e /me => 401. SMOKE FRONTEND (Playwright real preview URL): login admin OK → home mostra 'Feliciano' no navbar; cookies inspecionados no browser: access_token e refresh_token com secure=True, sameSite=None, httpOnly=True (idêntico ao comportamento anterior); páginas públicas /oracao /testemunhos /agenda /contribuicoes carregam sem login; /admin acessível para admin; logout-button retorna para /login. Nenhuma regressão detectada.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_auth_cookies_regression.py",
+    "/app/test_reports/pytest/auth_regression.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "_is_local() usa substring match em FRONTEND_URL; ok para preview/prod, mas se alguém definir FRONTEND_URL='https://localhost.example.com' cairia no modo inseguro. Considerar urlparse().hostname in {'localhost','127.0.0.1'}.",
+    "/auth/refresh não rotaciona o refresh_token (apenas renova access_token). Aceitável, mas rotação melhora segurança contra reuse."
+  ],
+  "updated_files": ["/app/backend/tests/test_auth_cookies_regression.py"],
+  "success_rate": {"backend": "100% (6/6 auth regression + previamente 12/12)", "frontend": "100% smoke (login, cookies, páginas públicas, /admin, logout)"},
+  "test_credentials": "Admin: felicianosrodrigues@gmail.com / Igreja@2026. Novos membros de teste criados via /api/auth/register (prefixo test_reg_*).",
+  "seed_data_creation": "Apenas 1 novo membro de teste (test_reg_<uuid>@example.com senha123) criado durante o teste do fluxo /register.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Bug fix da mudança em _cookie_kwargs() foi verificado: modo preview/produção mantido idêntico (Secure/SameSite=None/HttpOnly). Modo localhost (secure=False/samesite=lax) não é testável a partir do preview e foi validado apenas por leitura de código.",
+  "rca of the issue": "N/A — nenhum bug encontrado nesta iteração; verificação de regressão bem sucedida."
+}
