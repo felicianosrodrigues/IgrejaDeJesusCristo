@@ -26,7 +26,10 @@ export default function Contributions() {
   }, []);
 
   const copy = (text, label) => {
-    navigator.clipboard.writeText(text).then(() => toast.success(`${label} copiada`));
+    navigator.clipboard
+      .writeText(text)
+      .then(() => toast.success(`${label} copiada`))
+      .catch(() => toast.error(`Não foi possível copiar. ${label}: ${text}`));
   };
 
   const handleSubmit = async (e) => {
