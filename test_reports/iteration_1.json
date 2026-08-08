@@ -1,0 +1,36 @@
+{
+  "summary": "Comprehensive backend + frontend testing of the church app (auth, murais, agenda, sugestões, contribuições, admin). Backend: 12/12 pytest tests PASS. Frontend Playwright E2E: all 15 critical flows PASS (login, register, wrong-password error, member submits prayer/testimony (kept hidden until approval), admin approves posts & suggestions, event creation, contribution create + admin confirm, PIX update propagation, member cannot see or reach /admin, logout). One real front-end bug found: the 'Copiar PIX' button rejects an unhandled Promise (clipboard permission denied in iframe/headless contexts), which triggers the webpack-dev overlay and blocks further interaction in dev mode.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Contributions.jsx (copy PIX)", "issue": "navigator.clipboard.writeText(...).then(...) has NO .catch(); when clipboard write fails (permission denied, insecure context, headless/iframe), the Unhandled Promise Rejection triggers React runtime error overlay in dev and no user-visible toast in prod. Also swallows any success feedback. Fix: add .catch(() => toast.error('Não foi possível copiar')) or use try/catch.", "selector": "[data-testid='copy-pix-button']", "priority": "HIGH"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Contribuições - campo Data", "issues": ["Input type=date usa o seletor nativo do navegador (mostra 'mm/dd/yyyy' em inglês). Em app pt-BR seria melhor um DatePicker localizado (ex.: shadcn Calendar/Popover)."]},
+      {"screen": "Admin - mesmas observações do date/time nativos"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Adicionar .catch() ao navigator.clipboard.writeText no Contributions.jsx (copy-pix-button) para evitar unhandled promise rejection e mostrar toast de erro amigável.",
+    "(Opcional) Trocar inputs nativos de data por um calendário localizado pt-BR para melhor UX."
+  ],
+  "critical_code_review_comments": [
+    "server.py: uso de @app.on_event('startup') é depreciado no FastAPI moderno; migrar para lifespan handler.",
+    "server.py: hash bcrypt gerado sob demanda; ok. Login lockout implementado corretamente (5 tentativas / 15 min por IP+email). ADMIN_PASSWORD é atualizado se mudar — bom.",
+    "Contributions.jsx: falta de tratamento de erro no clipboard (bug reportado).",
+    "Admin.jsx / Agenda.jsx / etc: inputs date/time nativos — ok funcional, mas UX pt-BR poderia ser melhor.",
+    "Frontend: CORS backend permite origin específico + credenciais (correto). Cookies httpOnly com SameSite=None + Secure (correto para cross-site).",
+    "Nenhum vazamento de MongoDB _id detectado (todas as queries usam projection {_id: 0}).",
+    "public_user() exclui password_hash — correto."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py", "/app/backend/tests/__init__.py"],
+  "success_rate": {"backend": "100% (12/12)", "frontend": "100% dos fluxos críticos passaram; 1 bug de tratamento de erro no botão Copiar PIX"},
+  "test_credentials": "Admin: felicianosrodrigues@gmail.com / Igreja@2026. Membros criados durante o teste: membro.teste.1786186233@email.com, membro.teste.1786186315@email.com, test_wrong_*@ex.com, test_member_*@example.com (senha: senha123). Registrados via /api/auth/register — podem ser reutilizados.",
+  "seed_data_creation": "Contas de teste criadas via /api/auth/register (prefixo test_* e membro.teste.*). Vários posts/eventos/contribuições prefixados 'TEST ' foram criados no Mongo test_database. Podem ser limpos com filtros por prefixo se necessário.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Toda a stack está funcional. Apenas 1 bug menor: adicionar .catch() no copy-pix-button (Contributions.jsx). Radix Select da contribuição funciona clicando no trigger + item com force=True. Regra importante para novos testes de UI dev-mode: evitar acionar clipboard, pois o overlay do webpack-dev-server bloqueia interações subsequentes até reload.",
+  "rca of the issue": "Bug do botão Copiar PIX: navigator.clipboard.writeText retorna Promise; em contextos onde a permissão é negada (headless/iframe), a Promise é rejeitada. O código atual só encadeia .then() sem .catch(), resultando em Unhandled Promise Rejection. Em desenvolvimento, o overlay do react-dev-runtime captura o erro e bloqueia a página. Em produção, o usuário vê nada acontecer (sem toast de sucesso nem de erro). Reprodução: abrir /contribuicoes em contexto headless/iframe e clicar em [data-testid='copy-pix-button']. Mitigação: envolver em try/catch async ou anexar .catch(err => toast.error('Não foi possível copiar a chave PIX'))."
+}

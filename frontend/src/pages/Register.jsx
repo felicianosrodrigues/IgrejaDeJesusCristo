@@ -1,0 +1,127 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Church } from "lucide-react";
+import { api, formatApiError } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+
+const AUTH_BG =
+  "https://images.pexels.com/photos/14530767/pexels-photo-14530767.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940";
+
+export default function Register() {
+  const { setUser } = useAuth();
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const { data } = await api.post("/auth/register", { name, email, password });
+      setUser(data);
+      navigate("/");
+    } catch (err) {
+      setError(formatApiError(err, "Não foi possível criar a conta."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen grid md:grid-cols-2 bg-background" data-testid="register-page">
+      <div className="relative hidden md:block">
+        <img src={AUTH_BG} alt="Comunidade reunida em oração" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute bottom-12 left-12 right-12 text-white">
+          <p className="overline-label !text-white/70">Comunidade da Fé</p>
+          <h1 className="font-display text-4xl lg:text-5xl font-semibold mt-3 leading-tight">
+            Faça parte da nossa família em Cristo.
+          </h1>
+        </div>
+      </div>
+      <div className="flex items-center justify-center px-6 py-12">
+        <form onSubmit={handleSubmit} className="w-full max-w-sm" data-testid="register-form">
+          <div className="flex items-center gap-2 mb-8">
+            <span className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+              <Church size={20} />
+            </span>
+            <span className="font-display text-2xl font-semibold text-primary">Comunidade da Fé</span>
+          </div>
+          <h2 className="font-display text-4xl font-semibold tracking-tight">Crie sua conta</h2>
+          <p className="text-muted-foreground text-sm mt-2 mb-8">Cadastre-se para participar dos murais, agenda e contribuições.</p>
+
+          {error && (
+            <div data-testid="register-error" className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-sm px-4 py-3">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name">Nome completo</Label>
+              <Input
+                id="name"
+                required
+                minLength={2}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Seu nome"
+                data-testid="register-name-input"
+                className="mt-1.5"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                data-testid="register-email-input"
+                className="mt-1.5"
+              />
+            </div>
+            <div>
+              <Label htmlFor="password">Senha</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mínimo de 6 caracteres"
+                data-testid="register-password-input"
+                className="mt-1.5"
+              />
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={loading}
+            data-testid="register-submit-button"
+            className="w-full mt-6 rounded-full h-11 bg-primary hover:bg-primary/90 active:scale-95 transition-transform duration-100"
+          >
+            {loading ? "Criando conta..." : "Criar conta"}
+          </Button>
+          <p className="text-sm text-muted-foreground text-center mt-6">
+            Já tem conta?{" "}
+            <Link to="/login" data-testid="go-to-login-link" className="text-primary font-semibold hover:underline">
+              Entrar
+            </Link>
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+}
