@@ -112,6 +112,7 @@ class ChurchInfoIn(BaseModel):
     account: str = Field(max_length=30)
     holder: str = Field(max_length=120)
     cnpj: str = Field(max_length=30)
+    addresses: List[str] = Field(default_factory=list)
     instructions: Optional[str] = Field(default="", max_length=1000)
 
 
@@ -416,13 +417,19 @@ async def startup():
                                   {"$set": {"password_hash": hash_password(admin_password), "role": "admin"}})
 
     info = await db.settings.find_one({"id": "church_info"})
+    default_addresses = [
+        "Templo Principal — Rua da Fé, 123, Centro",
+        "Congregação Jardim Esperança — Av. das Palmeiras, 456, Jardim Esperança",
+    ]
     if not info:
         await db.settings.insert_one({
             "id": "church_info", "church_name": "Comunidade da Fé",
             "pix_key": "contribuir@comunidadedafe.com.br", "bank_name": "Banco do Brasil",
             "agency": "0001-X", "account": "12345-6", "holder": "Igreja Comunidade da Fé",
-            "cnpj": "00.000.000/0001-00",
+            "cnpj": "00.000.000/0001-00", "addresses": default_addresses,
             "instructions": "Após a transferência, registre sua contribuição no formulário ao lado para que a tesouraria confirme o recebimento."})
+    elif "addresses" not in info:
+        await db.settings.update_one({"id": "church_info"}, {"$set": {"addresses": default_addresses}})
 
     if await db.events.count_documents({}) == 0:
         today = utcnow().date()

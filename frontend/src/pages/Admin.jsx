@@ -364,6 +364,17 @@ export default function Admin() {
                 <Input value={info.cnpj} onChange={(e) => setInfo({ ...info, cnpj: e.target.value })} data-testid="church-cnpj-input" className="mt-1.5" />
               </div>
               <div>
+                <Label>Endereços das igrejas (um por linha)</Label>
+                <Textarea
+                  rows={3}
+                  value={(info.addresses || []).join("\n")}
+                  onChange={(e) => setInfo({ ...info, addresses: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })}
+                  placeholder={"Templo Principal — Rua da Fé, 123, Centro"}
+                  data-testid="church-addresses-input"
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
                 <Label>Instruções</Label>
                 <Textarea rows={3} value={info.instructions} onChange={(e) => setInfo({ ...info, instructions: e.target.value })} data-testid="church-instructions-input" className="mt-1.5" />
               </div>
