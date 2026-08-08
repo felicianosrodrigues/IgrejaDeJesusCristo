@@ -49,7 +49,7 @@ export default function Home() {
     <div className="max-w-6xl mx-auto px-6 py-12" data-testid="home-page">
       <p className="overline-label">Paz do Senhor</p>
       <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight mt-2">
-        Olá, {user?.name?.split(" ")[0]}
+        {user ? `Olá, ${user.name.split(" ")[0]}` : "Bem-vindo à Comunidade da Fé"}
       </h1>
       <p className="text-muted-foreground mt-3 max-w-xl text-base md:text-lg">
         “Tudo quanto fizerdes, fazei-o de coração, como ao Senhor.” — Colossenses 3:23

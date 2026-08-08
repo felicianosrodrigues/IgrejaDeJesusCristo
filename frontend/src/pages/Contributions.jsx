@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Copy, Landmark } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
 import { api, formatApiError } from "../lib/api";
 import { Button } from "../components/ui/button";
@@ -13,6 +15,7 @@ const TYPE_LABELS = { dizimo: "Dízimo", oferta: "Oferta", missoes: "Missões", 
 const brl = (v) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export default function Contributions() {
+  const { user } = useAuth();
   const [info, setInfo] = useState(null);
   const [mine, setMine] = useState([]);
   const [sending, setSending] = useState(false);
@@ -109,6 +112,7 @@ export default function Contributions() {
           )}
         </div>
 
+        {user ? (
         <form onSubmit={handleSubmit} className="feed-card" data-testid="contribution-form">
           <p className="overline-label">Registrar contribuição</p>
           <h2 className="font-display text-2xl font-semibold mt-1 mb-5">Informe seu dízimo ou oferta</h2>
@@ -176,8 +180,18 @@ export default function Contributions() {
             {sending ? "Registrando..." : "Registrar contribuição"}
           </Button>
         </form>
+        ) : (
+        <div className="feed-card text-center" data-testid="contribution-login-prompt">
+          <h2 className="font-display text-2xl font-semibold">Registre sua contribuição</h2>
+          <p className="text-muted-foreground text-sm mt-2 mb-5">Entre ou cadastre-se para registrar dízimos e ofertas e acompanhar seu histórico.</p>
+          <Link to="/login" data-testid="contribution-login-link" className="inline-block rounded-full bg-primary text-primary-foreground px-6 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors duration-150">
+            Entrar ou cadastrar-se
+          </Link>
+        </div>
+        )}
       </div>
 
+      {user && (
       <div className="mt-14">
         <p className="overline-label">Histórico</p>
         <h2 className="font-display text-3xl font-semibold mt-1 mb-6">Minhas contribuições</h2>
@@ -216,6 +230,7 @@ export default function Contributions() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

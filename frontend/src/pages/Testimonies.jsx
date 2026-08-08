@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
 import { api, formatApiError } from "../lib/api";
 import { Button } from "../components/ui/button";
@@ -10,6 +12,7 @@ const HEADER_IMG =
   "https://images.unsplash.com/photo-1503424160383-57de83bd6fb2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzl8MHwxfHNlYXJjaHwxfHxwZWFjZWZ1bCUyMG5hdHVyZSUyMGxhbmRzY2FwZSUyMGRhd258ZW58MHx8fHwxNzg2MTg1NDg0fDA&ixlib=rb-4.1.0&q=85";
 
 export default function Testimonies() {
+  const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
@@ -82,6 +85,7 @@ export default function Testimonies() {
         </div>
 
         <aside className="md:col-span-4">
+          {user ? (
           <form onSubmit={handleSubmit} className="feed-card md:sticky md:top-24" data-testid="testimony-form">
             <p className="overline-label">Novo testemunho</p>
             <h2 className="font-display text-2xl font-semibold mt-1 mb-5">Conte o que Deus fez</h2>
@@ -115,6 +119,15 @@ export default function Testimonies() {
               {sending ? "Enviando..." : "Enviar testemunho"}
             </Button>
           </form>
+          ) : (
+          <div className="feed-card md:sticky md:top-24 text-center" data-testid="testimony-login-prompt">
+            <h2 className="font-display text-2xl font-semibold">Tem um testemunho para contar?</h2>
+            <p className="text-muted-foreground text-sm mt-2 mb-5">Entre ou cadastre-se para compartilhar o que Deus tem feito na sua vida.</p>
+            <Link to="/login" data-testid="testimony-login-link" className="inline-block rounded-full bg-primary text-primary-foreground px-6 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors duration-150">
+              Entrar ou cadastrar-se
+            </Link>
+          </div>
+          )}
         </aside>
       </div>
     </div>

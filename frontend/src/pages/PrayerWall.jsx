@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { HeartHandshake } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "../lib/api";
@@ -12,6 +13,7 @@ const HEADER_IMG =
 
 export default function PrayerWall() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
@@ -42,6 +44,11 @@ export default function PrayerWall() {
   };
 
   const handlePray = async (post) => {
+    if (!user) {
+      toast.info("Faça login ou cadastre-se para orar por este pedido.");
+      navigate("/login");
+      return;
+    }
     const optimistic = post.prayed_by.includes(user.id)
       ? { prayed_by: post.prayed_by.filter((id) => id !== user.id), count: post.pray_count - 1 }
       : { prayed_by: [...post.prayed_by, user.id], count: post.pray_count + 1 };
@@ -88,7 +95,7 @@ export default function PrayerWall() {
             <p className="text-muted-foreground text-sm" data-testid="prayer-empty">Nenhum pedido aprovado ainda. Seja o primeiro a compartilhar.</p>
           ) : (
             posts.map((p, i) => {
-              const praying = p.prayed_by.includes(user.id);
+              const praying = user ? p.prayed_by.includes(user.id) : false;
               return (
                 <article
                   key={p.id}
@@ -131,6 +138,7 @@ export default function PrayerWall() {
         </div>
 
         <aside className="md:col-span-4">
+          {user ? (
           <form onSubmit={handleSubmit} className="feed-card md:sticky md:top-24" data-testid="prayer-form">
             <p className="overline-label">Novo pedido</p>
             <h2 className="font-display text-2xl font-semibold mt-1 mb-5">Compartilhe seu pedido</h2>
@@ -164,6 +172,15 @@ export default function PrayerWall() {
               {sending ? "Enviando..." : "Enviar pedido"}
             </Button>
           </form>
+          ) : (
+          <div className="feed-card md:sticky md:top-24 text-center" data-testid="prayer-login-prompt">
+            <h2 className="font-display text-2xl font-semibold">Quer compartilhar um pedido?</h2>
+            <p className="text-muted-foreground text-sm mt-2 mb-5">Entre ou cadastre-se para enviar pedidos de oração e orar pelos irmãos.</p>
+            <Link to="/login" data-testid="prayer-login-link" className="inline-block rounded-full bg-primary text-primary-foreground px-6 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors duration-150">
+              Entrar ou cadastrar-se
+            </Link>
+          </div>
+          )}
         </aside>
       </div>
     </div>

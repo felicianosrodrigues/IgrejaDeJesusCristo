@@ -38,6 +38,7 @@ export default function Admin() {
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
+  if (user === false) return <Navigate to="/login" replace />;
   if (user && user.role !== "admin") return <Navigate to="/" replace />;
 
   const postAction = async (id, action) => {

@@ -277,7 +277,7 @@ async def my_contributions(user: dict = Depends(get_current_user)):
 
 
 @api_router.get("/church-info")
-async def church_info(user: dict = Depends(get_current_user)):
+async def church_info():
     info = await db.settings.find_one({"id": "church_info"}, {"_id": 0})
     return info or {}
 

@@ -19,6 +19,11 @@
 - Frontend: React 19 + react-router 7 + Tailwind + shadcn/ui + sonner. Tema "Organic & Earthy" (Cormorant Garamond + Manrope, paleta verde/terracota conforme /app/design_guidelines.json).
 - Collections: users, posts (prayer/testimony, status pending/approved/rejected, prayed_by), events, suggestions, contributions, settings (church_info), login_attempts.
 
+## Implementado (2026-08-08, atualização 2)
+- Páginas públicas para leitura (sem login): Início, Mural de Oração, Testemunhos, Agenda, Contribuições (dados PIX/bancários). GET /church-info agora é público.
+- Qualquer interação exige cadastro/login: enviar pedido/testemunho, botão "Orando por você" (redireciona ao /login), sugerir evento, registrar contribuição e ver histórico. Formulários viram cartão "Entrar ou cadastrar-se" para visitantes; navbar mostra botão "Entrar" quando deslogado.
+- /admin protegido: visitante → /login; membro comum → /.
+
 ## Implementado (2026-08-08)
 - Auth completa: registro, login, logout, /me, refresh; admin seedado no startup.
 - Mural de Oração com moderação e botão "Orando por você" (toggle otimista + contador).

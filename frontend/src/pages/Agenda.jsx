@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { CalendarPlus, Clock, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -11,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
 export default function Agenda() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -23,6 +27,15 @@ export default function Agenda() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  const handleSuggestOpen = () => {
+    if (!user) {
+      toast.info("Faça login ou cadastre-se para sugerir um evento.");
+      navigate("/login");
+      return;
+    }
+    setOpen(true);
+  };
 
   const handleSuggest = async (e) => {
     e.preventDefault();
@@ -47,7 +60,7 @@ export default function Agenda() {
           <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight mt-1">Agenda da Igreja</h1>
         </div>
         <Button
-          onClick={() => setOpen(true)}
+          onClick={handleSuggestOpen}
           data-testid="suggest-event-button"
           variant="outline"
           className="rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground active:scale-95 transition-all duration-150"

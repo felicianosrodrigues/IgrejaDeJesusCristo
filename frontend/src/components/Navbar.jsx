@@ -65,17 +65,29 @@ export function Navbar() {
           )}
         </nav>
         <div className="flex items-center gap-3 shrink-0">
-          <span data-testid="nav-user-name" className="text-sm text-muted-foreground hidden md:block">
-            {user?.name}
-          </span>
-          <button
-            onClick={handleLogout}
-            data-testid="logout-button"
-            className="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors duration-150"
-            title="Sair"
-          >
-            <LogOut size={16} />
-          </button>
+          {user ? (
+            <>
+              <span data-testid="nav-user-name" className="text-sm text-muted-foreground hidden md:block">
+                {user.name}
+              </span>
+              <button
+                onClick={handleLogout}
+                data-testid="logout-button"
+                className="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors duration-150"
+                title="Sair"
+              >
+                <LogOut size={16} />
+              </button>
+            </>
+          ) : (
+            <NavLink
+              to="/login"
+              data-testid="nav-login-button"
+              className="px-4 py-2 rounded-full text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-150"
+            >
+              Entrar
+            </NavLink>
+          )}
         </div>
       </div>
     </header>
