@@ -11,6 +11,7 @@ import Testimonies from "@/pages/Testimonies";
 import Agenda from "@/pages/Agenda";
 import Contributions from "@/pages/Contributions";
 import Admin from "@/pages/Admin";
+import ResetPassword from "@/pages/ResetPassword";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Register />} />
+            <Route path="/redefinir-senha" element={<ResetPassword />} />
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
               <Route path="/oracao" element={<PrayerWall />} />

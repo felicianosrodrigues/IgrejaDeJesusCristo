@@ -4,6 +4,8 @@ load_dotenv()
 import os
 import uuid
 import logging
+import smtplib
+from email.message import EmailMessage
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Literal, List
 
@@ -20,6 +22,14 @@ db = client[os.environ['DB_NAME']]
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 JWT_ALGORITHM = "HS256"
 logger = logging.getLogger(__name__)
@@ -49,6 +59,41 @@ def create_access_token(user_id: str) -> str:
 def create_refresh_token(user_id: str) -> str:
     payload = {"sub": user_id, "exp": utcnow() + timedelta(days=7), "type": "refresh"}
     return jwt.encode(payload, get_jwt_secret(), algorithm=JWT_ALGORITHM)
+
+
+def create_reset_password_token(user_id: str) -> str:
+    payload = {"sub": user_id, "exp": utcnow() + timedelta(hours=1), "type": "reset_password"}
+    return jwt.encode(payload, get_jwt_secret(), algorithm=JWT_ALGORITHM)
+
+
+def decode_reset_password_token(token: str) -> dict:
+    return jwt.decode(token, get_jwt_secret(), algorithms=[JWT_ALGORITHM])
+
+
+def send_reset_email(to_email: str, reset_link: str) -> None:
+    smtp_host = os.environ.get("SMTP_HOST")
+    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+    smtp_user = os.environ.get("SMTP_USERNAME")
+    smtp_password = os.environ.get("SMTP_PASSWORD")
+    smtp_from = os.environ.get("SMTP_FROM", "noreply@igreja.com")
+
+    if not smtp_host or not smtp_user or not smtp_password:
+        logger.info("SMTP não configurado. Link de redefinição: %s", reset_link)
+        return
+
+    msg = EmailMessage()
+    msg["Subject"] = "Redefinição de senha - Igreja de Jesus Cristo"
+    msg["From"] = smtp_from
+    msg["To"] = to_email
+    msg.set_content(
+        f"Clique no link abaixo para redefinir sua senha:\n\n{reset_link}\n\n"
+        "Se você não solicitou isso, ignore este e-mail."
+    )
+
+    with smtplib.SMTP(smtp_host, smtp_port) as server:
+        server.starttls()
+        server.login(smtp_user, smtp_password)
+        server.send_message(msg)
 
 
 def _is_local() -> bool:
@@ -137,12 +182,23 @@ class ProfileUpdateIn(BaseModel):
     birthday: Optional[str] = Field(default="", max_length=20)
 
 
+class ForgotPasswordIn(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordIn(BaseModel):
+    token: str
+    new_password: str = Field(min_length=6, max_length=100)
+    confirm_password: str = Field(min_length=6, max_length=100)
+
+
 class AdminUserUpdateIn(BaseModel):
     name: Optional[str] = Field(default=None, min_length=2, max_length=80)
     email: Optional[EmailStr] = None
     role: Optional[Literal["member", "admin"]] = None
     address: Optional[str] = Field(default=None, max_length=200)
     birthday: Optional[str] = Field(default=None, max_length=20)
+    password: Optional[str] = Field(default=None, min_length=6, max_length=100)
 
 
 class AdminUserCreateIn(BaseModel):
@@ -223,6 +279,43 @@ async def logout(response: Response):
     return {"ok": True}
 
 
+@api_router.post("/auth/forgot-password")
+async def forgot_password(data: ForgotPasswordIn):
+    email = str(data.email).lower()
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+    if not user:
+        return {"ok": True, "message": "Se a conta existir, um e-mail com o link de redefinição foi enviado."}
+
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+    reset_token = create_reset_password_token(user["id"])
+    reset_link = f"{frontend_url.rstrip('/')}/redefinir-senha?token={reset_token}"
+    send_reset_email(email, reset_link)
+    return {"ok": True, "message": "Se a conta existir, um e-mail com o link de redefinição foi enviado."}
+
+
+@api_router.post("/auth/reset-password")
+async def reset_password(data: ResetPasswordIn):
+    if data.new_password != data.confirm_password:
+        raise HTTPException(400, "As senhas não conferem")
+
+    try:
+        payload = decode_reset_password_token(data.token)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(401, "Link expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(401, "Token inválido")
+
+    if payload.get("type") != "reset_password":
+        raise HTTPException(401, "Token inválido")
+
+    user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0})
+    if not user:
+        raise HTTPException(404, "Usuário não encontrado")
+
+    await db.users.update_one({"id": user["id"]}, {"$set": {"password_hash": hash_password(data.new_password)}})
+    return {"ok": True, "message": "Senha redefinida com sucesso"}
+
+
 @api_router.get("/auth/me")
 async def me(user: dict = Depends(get_current_user)):
     return public_user(user)
@@ -286,6 +379,8 @@ async def update_user_by_admin(user_id: str, data: AdminUserUpdateIn, admin: dic
         update_data["address"] = data.address.strip()
     if data.birthday is not None:
         update_data["birthday"] = data.birthday
+    if data.password is not None:
+        update_data["password_hash"] = hash_password(data.password)
 
     if not update_data:
         existing = await db.users.find_one({"id": user_id}, {"_id": 0})

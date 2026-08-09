@@ -17,6 +17,10 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,6 +34,25 @@ export default function Login() {
       setError(formatApiError(err, "Não foi possível entrar."));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setError("");
+    setForgotSuccess("");
+    setForgotLoading(true);
+    try {
+      await api.post("/auth/forgot-password", {
+        email: forgotEmail,
+      });
+      setForgotSuccess("Se a conta existir, enviamos um link de redefinição para o e-mail informado.");
+      setShowForgotPassword(false);
+      setForgotEmail("");
+    } catch (err) {
+      setError(formatApiError(err, "Não foi possível redefinir a senha."));
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -100,6 +123,35 @@ export default function Login() {
           >
             {loading ? "Entrando..." : "Entrar"}
           </Button>
+
+          <div className="mt-3 text-center">
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword((current) => !current)}
+              className="text-sm text-primary font-semibold hover:underline"
+            >
+              Esqueci a senha
+            </button>
+          </div>
+
+          {showForgotPassword && (
+            <form onSubmit={handleForgotPassword} className="mt-4 rounded-xl border border-border bg-muted/40 p-4 space-y-3">
+              <p className="text-sm text-muted-foreground">Informe o email e defina uma nova senha.</p>
+              <Input
+                type="email"
+                required
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="seu@email.com"
+              />
+              <Button type="submit" disabled={forgotLoading} className="w-full rounded-full bg-primary hover:bg-primary/90">
+                {forgotLoading ? "Enviando..." : "Enviar link de redefinição"}
+              </Button>
+            </form>
+          )}
+
+          {forgotSuccess && <p className="mt-4 text-sm text-primary">{forgotSuccess}</p>}
+
           <p className="text-sm text-muted-foreground text-center mt-6">
             Ainda não tem conta?{" "}
             <Link to="/registro" data-testid="go-to-register-link" className="text-primary font-semibold hover:underline">

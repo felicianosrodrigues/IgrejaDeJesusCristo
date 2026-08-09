@@ -27,7 +27,7 @@ export default function Admin() {
   const [info, setInfo] = useState(null);
   const [eventForm, setEventForm] = useState({ title: "", description: "", date: "", time: "", location: "" });
   const [editingUserId, setEditingUserId] = useState(null);
-  const [editingUserForm, setEditingUserForm] = useState({ name: "", email: "", role: "member", address: "", birthday: "" });
+  const [editingUserForm, setEditingUserForm] = useState({ name: "", email: "", role: "member", address: "", birthday: "", password: "" });
   const [newUserForm, setNewUserForm] = useState({ name: "", email: "", password: "", role: "member", address: "", birthday: "" });
   const [creatingUser, setCreatingUser] = useState(false);
   const [videoForm, setVideoForm] = useState({ title: "", url: "", description: "" });
@@ -132,17 +132,22 @@ export default function Admin() {
       role: user.role || "member",
       address: user.address || "",
       birthday: user.birthday || "",
+      password: "",
     });
   };
 
   const cancelEditingUser = () => {
     setEditingUserId(null);
-    setEditingUserForm({ name: "", email: "", role: "member", address: "", birthday: "" });
+    setEditingUserForm({ name: "", email: "", role: "member", address: "", birthday: "", password: "" });
   };
 
   const saveUser = async (id) => {
     try {
-      const response = await api.put(`/admin/users/${id}`, editingUserForm);
+      const payload = { ...editingUserForm };
+      if (!payload.password?.trim()) {
+        delete payload.password;
+      }
+      const response = await api.put(`/admin/users/${id}`, payload);
       setUsers((current) => current.map((user) => (user.id === id ? response.data : user)));
       setEditingUserId(null);
       toast.success("Usuário atualizado.");
@@ -499,6 +504,16 @@ export default function Admin() {
                             value={editingUserForm.address}
                             onChange={(e) => setEditingUserForm({ ...editingUserForm, address: e.target.value })}
                             className="mt-1.5"
+                          />
+                        </div>
+                        <div>
+                          <Label>Nova senha</Label>
+                          <Input
+                            type="password"
+                            value={editingUserForm.password}
+                            onChange={(e) => setEditingUserForm({ ...editingUserForm, password: e.target.value })}
+                            className="mt-1.5"
+                            placeholder="Deixe em branco para manter"
                           />
                         </div>
                         <div className="flex gap-2">

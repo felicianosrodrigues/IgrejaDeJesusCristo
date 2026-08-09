@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { HeartHandshake, Sparkles, Landmark, Copy, ArrowRight, Clock, MapPin, Instagram, Youtube, Images, ExternalLink, CalendarDays, Home as HomeIcon } from "lucide-react";
+import { HeartHandshake, Sparkles, Landmark, Copy, ArrowRight, Clock, MapPin, Instagram, Youtube, ExternalLink, CalendarDays, Home as HomeIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { api, formatApiError } from "../lib/api";
@@ -22,13 +22,14 @@ const socialLinks = [
     label: "Instagram",
     description: "Acompanhe nossos bastidores e novidades",
     icon: Instagram,
-  },
-  {
-    href: "https://www.youtube.com/@IgrejadeJesusCristoVespasiano",
-    label: "YouTube",
-    description: "Assista cultos, mensagens e vídeos especiais",
-    icon: Youtube,
-  },
+  }
+];
+
+const quickLinks = [
+  { to: "/agenda", title: "Cultos e horários", description: "Confira os próximos encontros e eventos da igreja.", icon: CalendarDays },
+  { to: "/oracao", title: "Mural de oração", description: "Deixe seu pedido e receba intercessão da comunidade.", icon: HeartHandshake },
+  { to: "/testemunhos", title: "Testemunhos", description: "Leia histórias de fé e transformação da nossa igreja.", icon: Sparkles },
+  { to: "/contribuicoes", title: "Contribua", description: "Apoie a obra com sua oferta, dízimo e participação.", icon: Landmark },
 ];
 
 export default function Home() {
@@ -76,34 +77,93 @@ export default function Home() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12" data-testid="home-page">
-      <div className="max-w-2xl">
-        <p className="overline-label">Paz do Senhor</p>
-        <h1 className="font-display text-4xl sm:text-5xl font-semibold tracking-tight mt-2">
-          {user ? `Olá, ${user.name.split(" ")[0]}` : "Bem-vindo à Igreja de Jesus Cristo"}
-        </h1>
-        <p className="text-muted-foreground mt-3 text-base md:text-lg">
-          “Tudo quanto fizerdes, fazei-o de coração, como ao Senhor.” — Colossenses 3:23
-        </p>
-        {!user && (
-          <Link
-            to="/login"
-            data-testid="home-login-cta"
-            className="inline-block mt-6 rounded-full bg-primary text-primary-foreground px-6 py-2.5 text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all duration-150"
-          >
-            Entrar ou cadastrar-se para participar
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8" data-testid="home-page">
+      <section className="relative overflow-hidden rounded-[2rem] border border-border/80 bg-card shadow-[0_30px_80px_-35px_rgba(15,46,33,0.35)]">
+        <img
+          src="https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1400&q=80"
+          alt="Igreja em culto"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0f2e21]/95 via-[#0f2e21]/75 to-[#0f2e21]/20" />
+        <div className="relative grid gap-8 px-6 py-10 lg:grid-cols-[1.15fr_0.85fr] lg:px-10 lg:py-14">
+          <div className="max-w-2xl text-white">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-200">Paz do Senhor</p>
+            <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+              {user ? `Olá, ${user.name.split(" ")[0]}` : "Uma igreja acolhedora, viva e cheia de propósito"}
+            </h1>
+            <p className="mt-4 text-base text-white/80 sm:text-lg">
+              “Tudo quanto fizerdes, fazei-o de coração, como ao Senhor.” — Colossenses 3:23
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {!user ? (
+                <Link
+                  to="/login"
+                  data-testid="home-login-cta"
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+                >
+                  Entrar ou cadastrar-se <ArrowRight size={16} />
+                </Link>
+              ) : (
+                <Link
+                  to="/agenda"
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+                >
+                  Ver agenda <ArrowRight size={16} />
+                </Link>
+              )}
+              <Link
+                to="/oracao"
+                className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
+              >
+                Mural de oração
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-[1.5rem] border border-white/15 bg-white/10 p-5 backdrop-blur-md">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-100">Na igreja</p>
+            <div className="mt-4 space-y-3">
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-sm font-semibold text-white">Cultos aos domingos</p>
+                <p className="mt-1 text-sm text-white/75">Experiências de adoração, palavra e comunhão.</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-sm font-semibold text-white">Oração e apoio</p>
+                <p className="mt-1 text-sm text-white/75">Uma comunidade pronta para interceder por você.</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-sm font-semibold text-white">Mídia e conteúdo</p>
+                <p className="mt-1 text-sm text-white/75">Cultos, mensagens e testemunhos em um só lugar.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4" data-testid="home-quick-links">
+        {quickLinks.map(({ to, title, description, icon: Icon }) => (
+          <Link key={title} to={to} className="feed-card block group">
+            <div className="flex items-center gap-3">
+              <span className="rounded-2xl bg-primary/10 p-2 text-primary">
+                <Icon size={18} />
+              </span>
+              <div>
+                <h3 className="font-semibold text-foreground">{title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+              </div>
+            </div>
           </Link>
-        )}
-      </div>
+        ))}
+      </section>
 
       {user && (
-        <section className="mt-10" data-testid="home-profile-section">
+        <section className="mt-8" data-testid="home-profile-section">
           <div className="feed-card">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="overline-label">Seu perfil</p>
-                <h2 className="font-display text-2xl font-semibold mt-1">Atualize seus dados</h2>
-                <p className="text-sm text-muted-foreground mt-2">
+                <h2 className="mt-1 font-display text-2xl font-semibold">Atualize seus dados</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
                   Adicione seu endereço e data de aniversário para manter seu cadastro sempre atualizado.
                 </p>
               </div>
@@ -152,67 +212,64 @@ export default function Home() {
         </section>
       )}
 
-      <section className="mt-14" data-testid="home-events-section">
-        <div className="flex items-end justify-between mb-6">
+      <section className="mt-10" data-testid="home-events-section">
+        <div className="mb-6 flex items-end justify-between">
           <div>
             <p className="overline-label">Agenda</p>
-            <h2 className="font-display text-3xl font-semibold mt-1">Próximos eventos</h2>
+            <h2 className="mt-1 font-display text-3xl font-semibold">Próximos eventos</h2>
           </div>
           <Link to="/agenda" data-testid="home-see-agenda-link" className="text-sm font-semibold text-primary hover:underline">
             Ver agenda completa
           </Link>
         </div>
         {events.length === 0 ? (
-          <p className="text-muted-foreground text-sm" data-testid="home-no-events">Nenhum evento programado no momento.</p>
+          <p className="text-sm text-muted-foreground" data-testid="home-no-events">Nenhum evento programado no momento.</p>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {events.map((ev) => {
-              const [y, m, d] = ev.date.split("-");
-              return (
-                <div key={ev.id} data-testid={`home-event-${ev.id}`} className="feed-card">
-                  <p className="font-display text-3xl font-bold text-primary leading-none">{d}</p>
-                  <p className="overline-label mt-1">{MESES[parseInt(m, 10) - 1]}</p>
-                  <h3 className="font-semibold mt-3">{ev.title}</h3>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1.5">
-                    <Clock size={12} /> {ev.time}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {events.map((ev) => (
+              <div key={ev.id} data-testid={`home-event-${ev.id}`} className="feed-card">
+                <p className="font-display text-3xl font-bold leading-none text-primary">{ev.date.split("-")[2]}</p>
+                <p className="overline-label mt-1">{MESES[parseInt(ev.date.split("-")[1], 10) - 1]}</p>
+                <h3 className="mt-3 font-semibold">{ev.title}</h3>
+                <p className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock size={12} /> {ev.time}
+                </p>
+                {ev.location && (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin size={12} /> {ev.location}
                   </p>
-                  {ev.location && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                      <MapPin size={12} /> {ev.location}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
+                )}
+              </div>
+            ))}
           </div>
         )}
       </section>
 
-      <div className="grid lg:grid-cols-2 gap-10 mt-14">
+      <div className="mt-10 grid gap-8 lg:grid-cols-2">
         <section data-testid="home-prayers-section">
-          <div className="flex items-end justify-between mb-6">
+          <div className="mb-6 flex items-end justify-between">
             <div>
               <p className="overline-label">Intercessão</p>
-              <h2 className="font-display text-3xl font-semibold mt-1">Pedidos de oração</h2>
+              <h2 className="mt-1 font-display text-3xl font-semibold">Pedidos de oração</h2>
             </div>
             <Link to="/oracao" data-testid="home-see-prayers-link" className="text-sm font-semibold text-primary hover:underline">
               Ver mural
             </Link>
           </div>
           {prayers.length === 0 ? (
-            <p className="text-muted-foreground text-sm" data-testid="home-no-prayers">Nenhum pedido publicado ainda.</p>
+            <p className="text-sm text-muted-foreground" data-testid="home-no-prayers">Nenhum pedido publicado ainda.</p>
           ) : (
             <div className="space-y-4">
               {prayers.map((p) => (
                 <Link key={p.id} to="/oracao" data-testid={`home-prayer-${p.id}`} className="feed-card block group">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="font-semibold group-hover:text-primary transition-colors duration-150">{p.title}</h3>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent shrink-0">
+                    <h3 className="font-semibold transition-colors duration-150 group-hover:text-primary">{p.title}</h3>
+                    <span className="inline-flex items-center gap-1.5 shrink-0 text-xs font-semibold text-accent">
                       <HeartHandshake size={14} /> {p.pray_count} orando
                     </span>
                   </div>
-                  <p className="text-muted-foreground text-sm mt-1.5 line-clamp-2">{p.content}</p>
-                  <p className="text-xs text-muted-foreground mt-2">{p.author_name}</p>
+                  <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{p.content}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{p.author_name}</p>
                 </Link>
               ))}
             </div>
@@ -220,27 +277,27 @@ export default function Home() {
         </section>
 
         <section data-testid="home-testimonies-section">
-          <div className="flex items-end justify-between mb-6">
+          <div className="mb-6 flex items-end justify-between">
             <div>
               <p className="overline-label">Gratidão</p>
-              <h2 className="font-display text-3xl font-semibold mt-1">Testemunhos</h2>
+              <h2 className="mt-1 font-display text-3xl font-semibold">Testemunhos</h2>
             </div>
             <Link to="/testemunhos" data-testid="home-see-testimonies-link" className="text-sm font-semibold text-primary hover:underline">
               Ver mural
             </Link>
           </div>
           {testimonies.length === 0 ? (
-            <p className="text-muted-foreground text-sm" data-testid="home-no-testimonies">Nenhum testemunho publicado ainda.</p>
+            <p className="text-sm text-muted-foreground" data-testid="home-no-testimonies">Nenhum testemunho publicado ainda.</p>
           ) : (
             <div className="space-y-4">
               {testimonies.map((p) => (
                 <Link key={p.id} to="/testemunhos" data-testid={`home-testimony-${p.id}`} className="feed-card block group">
                   <div className="flex items-center gap-2">
-                    <Sparkles size={14} className="text-accent shrink-0" />
-                    <h3 className="font-semibold group-hover:text-primary transition-colors duration-150">{p.title}</h3>
+                    <Sparkles size={14} className="shrink-0 text-accent" />
+                    <h3 className="font-semibold transition-colors duration-150 group-hover:text-primary">{p.title}</h3>
                   </div>
-                  <p className="text-muted-foreground text-sm mt-1.5 line-clamp-2">{p.content}</p>
-                  <p className="text-xs text-muted-foreground mt-2">{p.author_name}</p>
+                  <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">{p.content}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{p.author_name}</p>
                 </Link>
               ))}
             </div>
@@ -248,16 +305,16 @@ export default function Home() {
         </section>
       </div>
 
-      <section className="mt-14" data-testid="home-media-section">
-        <div className="flex items-end justify-between mb-6">
+      <section className="mt-10" data-testid="home-media-section">
+        <div className="mb-6 flex items-end justify-between">
           <div>
             <p className="overline-label">Mídia</p>
-            <h2 className="font-display text-3xl font-semibold mt-1">Galeria e redes sociais</h2>
+            <h2 className="mt-1 font-display text-3xl font-semibold">Galeria e redes sociais</h2>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-6">
-          <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="grid gap-4 sm:grid-cols-2">
             {(info?.videos || []).length > 0 ? (
               info.videos.map((video) => {
                 const thumbnail = getVideoThumbnail(video.url);
@@ -267,7 +324,7 @@ export default function Home() {
                     href={video.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="feed-card p-0 overflow-hidden group block"
+                    className="feed-card block overflow-hidden p-0 group"
                   >
                     <div className="relative">
                       {thumbnail ? (
@@ -289,7 +346,7 @@ export default function Home() {
                         </div>
                         <ExternalLink size={14} className="text-muted-foreground" />
                       </div>
-                      {video.description && <p className="text-sm text-muted-foreground mt-2">{video.description}</p>}
+                      {video.description && <p className="mt-2 text-sm text-muted-foreground">{video.description}</p>}
                     </div>
                   </a>
                 );
@@ -304,14 +361,14 @@ export default function Home() {
           <div className="space-y-4">
             <div className="feed-card">
               <p className="overline-label">Siga a igreja</p>
-              <div className="space-y-3 mt-4">
+              <div className="mt-4 space-y-3">
                 {socialLinks.map(({ href, label, description, icon: Icon }) => (
                   <a
                     key={label}
                     href={href}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-between rounded-xl border border-border p-3 hover:bg-secondary transition-colors duration-150"
+                    className="flex items-center justify-between rounded-xl border border-border p-3 transition-colors duration-150 hover:bg-secondary"
                   >
                     <span className="flex items-center gap-3">
                       <span className="rounded-full bg-primary/10 p-2 text-primary">
@@ -337,16 +394,16 @@ export default function Home() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="overline-label">Vídeos</p>
-                  <h3 className="font-semibold mt-2">Assista aos nossos conteúdos</h3>
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <h3 className="mt-2 font-semibold">Assista aos nossos conteúdos</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
                     Acompanhe mensagens, cultos e momentos especiais no YouTube.
                   </p>
                 </div>
-                <span className="rounded-full bg-primary/10 p-2 text-primary shrink-0">
+                <span className="shrink-0 rounded-full bg-primary/10 p-2 text-primary">
                   <Youtube size={18} />
                 </span>
               </div>
-              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:bg-primary/90 transition-colors duration-150">
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors duration-150 hover:bg-primary/90">
                 <Youtube size={16} /> Abrir no YouTube
               </div>
             </a>
@@ -354,31 +411,31 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mt-14" data-testid="home-contributions-section">
+      <section className="mt-10" data-testid="home-contributions-section">
         <p className="overline-label">Generosidade</p>
-        <h2 className="font-display text-3xl font-semibold mt-1 mb-6">Contribua com a obra</h2>
+        <h2 className="mt-1 mb-6 font-display text-3xl font-semibold">Contribua com a obra</h2>
         {info && (
           <div className="feed-card flex flex-wrap items-center gap-6">
-            <span className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Landmark size={22} />
             </span>
-            <div className="flex-1 min-w-[220px]">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider">Chave PIX</p>
-              <p className="font-semibold break-all" data-testid="home-pix-key">{info.pix_key}</p>
-              <p className="text-xs text-muted-foreground mt-1">{info.bank_name} • Ag {info.agency} • Cc {info.account}</p>
+            <div className="min-w-[220px] flex-1">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Chave PIX</p>
+              <p className="break-all font-semibold" data-testid="home-pix-key">{info.pix_key}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{info.bank_name} • Ag {info.agency} • Cc {info.account}</p>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={copyPix}
                 data-testid="home-copy-pix-button"
-                className="inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold hover:bg-primary/90 active:scale-95 transition-all duration-150"
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all duration-150 hover:bg-primary/90 active:scale-95"
               >
                 <Copy size={14} /> Copiar chave
               </button>
               <Link
                 to="/contribuicoes"
                 data-testid="home-see-contributions-link"
-                className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold text-primary hover:bg-secondary transition-colors duration-150"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold text-primary transition-colors duration-150 hover:bg-secondary"
               >
                 Detalhes <ArrowRight size={14} />
               </Link>
@@ -388,13 +445,13 @@ export default function Home() {
       </section>
 
       {info?.addresses?.length > 0 && (
-        <section className="mt-14" data-testid="home-addresses-section">
+        <section className="mt-10" data-testid="home-addresses-section">
           <p className="overline-label">Visite-nos</p>
-          <h2 className="font-display text-3xl font-semibold mt-1 mb-6">Nossos endereços</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <h2 className="mt-1 mb-6 font-display text-3xl font-semibold">Nossos endereços</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
             {info.addresses.map((addr, i) => (
               <div key={i} data-testid={`home-address-${i}`} className="feed-card flex items-start gap-3">
-                <MapPin size={18} className="text-accent shrink-0 mt-0.5" />
+                <MapPin size={18} className="mt-0.5 shrink-0 text-accent" />
                 <p className="text-sm">{addr}</p>
               </div>
             ))}
