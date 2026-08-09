@@ -13,6 +13,17 @@ export function AuthProvider({ children }) {
       .catch(() => setUser(false));
   }, []);
 
+  const refreshUser = async () => {
+    try {
+      const response = await api.get("/auth/me");
+      setUser(response.data);
+      return response.data;
+    } catch (e) {
+      setUser(false);
+      return null;
+    }
+  };
+
   const logout = async () => {
     try {
       await api.post("/auth/logout");
@@ -21,7 +32,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, logout }}>
+    <AuthContext.Provider value={{ user, setUser, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 const TYPE_LABELS = { dizimo: "Dízimo", oferta: "Oferta", missoes: "Missões", outro: "Outro" };
 const brl = (v) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString("pt-BR") : "-");
+const fmtBirthday = (value) => (value ? value.split("-").reverse().join("/") : "-");
 
 export default function Admin() {
   const { user } = useAuth();
@@ -22,8 +23,14 @@ export default function Admin() {
   const [suggestions, setSuggestions] = useState([]);
   const [events, setEvents] = useState([]);
   const [contributions, setContributions] = useState([]);
+  const [users, setUsers] = useState([]);
   const [info, setInfo] = useState(null);
   const [eventForm, setEventForm] = useState({ title: "", description: "", date: "", time: "", location: "" });
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editingUserForm, setEditingUserForm] = useState({ name: "", email: "", role: "member", address: "", birthday: "" });
+  const [newUserForm, setNewUserForm] = useState({ name: "", email: "", password: "", role: "member", address: "", birthday: "" });
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [videoForm, setVideoForm] = useState({ title: "", url: "", description: "" });
   const [savingEvent, setSavingEvent] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
 
@@ -33,7 +40,8 @@ export default function Admin() {
     api.get("/admin/suggestions").then((r) => setSuggestions(r.data)).catch(() => {});
     api.get("/events").then((r) => setEvents(r.data)).catch(() => {});
     api.get("/admin/contributions").then((r) => setContributions(r.data)).catch(() => {});
-    api.get("/church-info").then((r) => setInfo(r.data)).catch(() => {});
+    api.get("/admin/users").then((r) => setUsers(r.data)).catch(() => {});
+    api.get("/church-info").then((r) => setInfo(r.data || { addresses: [], videos: [] })).catch(() => {});
   }, []);
 
   useEffect(() => { loadAll(); }, [loadAll]);
@@ -116,6 +124,74 @@ export default function Admin() {
     }
   };
 
+  const startEditingUser = (user) => {
+    setEditingUserId(user.id);
+    setEditingUserForm({
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role || "member",
+      address: user.address || "",
+      birthday: user.birthday || "",
+    });
+  };
+
+  const cancelEditingUser = () => {
+    setEditingUserId(null);
+    setEditingUserForm({ name: "", email: "", role: "member", address: "", birthday: "" });
+  };
+
+  const saveUser = async (id) => {
+    try {
+      const response = await api.put(`/admin/users/${id}`, editingUserForm);
+      setUsers((current) => current.map((user) => (user.id === id ? response.data : user)));
+      setEditingUserId(null);
+      toast.success("Usuário atualizado.");
+    } catch (err) {
+      toast.error(formatApiError(err));
+    }
+  };
+
+  const createUser = async (e) => {
+    e.preventDefault();
+    setCreatingUser(true);
+    try {
+      const response = await api.post("/admin/users", newUserForm);
+      setUsers((current) => [...current, response.data]);
+      setNewUserForm({ name: "", email: "", password: "", role: "member", address: "", birthday: "" });
+      toast.success("Usuário criado com sucesso.");
+    } catch (err) {
+      toast.error(formatApiError(err));
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
+  const addVideo = () => {
+    if (!info) return;
+    if (!videoForm.title.trim() || !videoForm.url.trim()) {
+      toast.error("Preencha o título e a URL do vídeo.");
+      return;
+    }
+    setInfo({
+      ...info,
+      videos: [
+        ...(info.videos || []),
+        {
+          id: `${Date.now()}`,
+          title: videoForm.title.trim(),
+          url: videoForm.url.trim(),
+          description: videoForm.description.trim(),
+        },
+      ],
+    });
+    setVideoForm({ title: "", url: "", description: "" });
+  };
+
+  const removeVideo = (id) => {
+    if (!info) return;
+    setInfo({ ...info, videos: (info.videos || []).filter((video) => video.id !== id) });
+  };
+
   const saveInfo = async (e) => {
     e.preventDefault();
     setSavingInfo(true);
@@ -156,6 +232,7 @@ export default function Admin() {
           <TabsTrigger value="eventos" data-testid="tab-eventos">Eventos</TabsTrigger>
           <TabsTrigger value="sugestoes" data-testid="tab-sugestoes">Sugestões ({suggestions.filter((s) => s.status === "pending").length})</TabsTrigger>
           <TabsTrigger value="contribuicoes" data-testid="tab-contribuicoes">Contribuições</TabsTrigger>
+          <TabsTrigger value="usuarios" data-testid="tab-usuarios">Usuários ({users.length})</TabsTrigger>
           <TabsTrigger value="igreja" data-testid="tab-igreja">Dados da Igreja</TabsTrigger>
         </TabsList>
 
@@ -329,6 +406,135 @@ export default function Admin() {
           )}
         </TabsContent>
 
+        <TabsContent value="usuarios">
+          <div className="rounded-2xl border border-border bg-card p-6 mb-6">
+            <h3 className="font-display text-xl font-semibold">Cadastrar novo usuário</h3>
+            <form onSubmit={createUser} className="mt-4 grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>Nome</Label>
+                <Input required value={newUserForm.name} onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })} className="mt-1.5" />
+              </div>
+              <div>
+                <Label>Email</Label>
+                <Input required type="email" value={newUserForm.email} onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })} className="mt-1.5" />
+              </div>
+              <div>
+                <Label>Senha</Label>
+                <Input required type="password" value={newUserForm.password} onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })} className="mt-1.5" />
+              </div>
+              <div>
+                <Label>Tipo</Label>
+                <select value={newUserForm.role} onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value })} className="mt-1.5 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                  <option value="member">Membro</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </div>
+              <div>
+                <Label>Endereço</Label>
+                <Input value={newUserForm.address} onChange={(e) => setNewUserForm({ ...newUserForm, address: e.target.value })} className="mt-1.5" />
+              </div>
+              <div>
+                <Label>Aniversário</Label>
+                <Input type="date" value={newUserForm.birthday} onChange={(e) => setNewUserForm({ ...newUserForm, birthday: e.target.value })} className="mt-1.5" />
+              </div>
+              <div className="md:col-span-2 flex justify-end">
+                <Button type="submit" disabled={creatingUser} className="rounded-full bg-primary hover:bg-primary/90">
+                  {creatingUser ? "Cadastrando..." : "Cadastrar usuário"}
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card overflow-hidden">
+            {users.length === 0 ? (
+              <p className="p-6 text-sm text-muted-foreground" data-testid="admin-users-empty">Nenhum usuário cadastrado.</p>
+            ) : (
+              <div className="divide-y divide-border">
+                {users.map((userItem) => (
+                  <div key={userItem.id} className="p-4" data-testid={`admin-user-${userItem.id}`}>
+                    {editingUserId === userItem.id ? (
+                      <div className="space-y-4">
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div>
+                            <Label>Nome</Label>
+                            <Input
+                              value={editingUserForm.name}
+                              onChange={(e) => setEditingUserForm({ ...editingUserForm, name: e.target.value })}
+                              className="mt-1.5"
+                            />
+                          </div>
+                          <div>
+                            <Label>Email</Label>
+                            <Input
+                              type="email"
+                              value={editingUserForm.email}
+                              onChange={(e) => setEditingUserForm({ ...editingUserForm, email: e.target.value })}
+                              className="mt-1.5"
+                            />
+                          </div>
+                          <div>
+                            <Label>Tipo</Label>
+                            <select
+                              value={editingUserForm.role}
+                              onChange={(e) => setEditingUserForm({ ...editingUserForm, role: e.target.value })}
+                              className="mt-1.5 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            >
+                              <option value="member">Membro</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                          </div>
+                          <div>
+                            <Label>Aniversário</Label>
+                            <Input
+                              type="date"
+                              value={editingUserForm.birthday}
+                              onChange={(e) => setEditingUserForm({ ...editingUserForm, birthday: e.target.value })}
+                              className="mt-1.5"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label>Endereço</Label>
+                          <Input
+                            value={editingUserForm.address}
+                            onChange={(e) => setEditingUserForm({ ...editingUserForm, address: e.target.value })}
+                            className="mt-1.5"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={() => saveUser(userItem.id)} className="rounded-full bg-primary hover:bg-primary/90">
+                            Salvar
+                          </Button>
+                          <Button variant="outline" onClick={cancelEditingUser} className="rounded-full">
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="min-w-[240px]">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold">{userItem.name}</p>
+                            <Badge variant="secondary" className={userItem.role === "admin" ? "bg-primary/10 text-primary" : "bg-accent/10 text-accent"}>
+                              {userItem.role === "admin" ? "Admin" : "Membro"}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">{userItem.email}</p>
+                          <p className="text-xs text-muted-foreground mt-1">Endereço: {userItem.address || "—"}</p>
+                          <p className="text-xs text-muted-foreground mt-1">Aniversário: {fmtBirthday(userItem.birthday)}</p>
+                        </div>
+                        <Button variant="outline" onClick={() => startEditingUser(userItem)} className="rounded-full">
+                          Editar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
         <TabsContent value="igreja">
           {info && (
             <form onSubmit={saveInfo} className="rounded-2xl border border-border bg-card p-6 max-w-2xl space-y-4" data-testid="church-info-form">
@@ -377,6 +583,42 @@ export default function Admin() {
               <div>
                 <Label>Instruções</Label>
                 <Textarea rows={3} value={info.instructions} onChange={(e) => setInfo({ ...info, instructions: e.target.value })} data-testid="church-instructions-input" className="mt-1.5" />
+              </div>
+              <div>
+                <Label>Vídeos exibidos na home</Label>
+                <div className="mt-2 space-y-3 rounded-xl border border-border p-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs">Título</Label>
+                      <Input value={videoForm.title} onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })} placeholder="Culto de domingo" className="mt-1.5" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">URL do vídeo</Label>
+                      <Input value={videoForm.url} onChange={(e) => setVideoForm({ ...videoForm, url: e.target.value })} placeholder="https://www.youtube.com/watch?v=..." className="mt-1.5" />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Descrição</Label>
+                    <Textarea rows={2} value={videoForm.description} onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })} placeholder="Resumo ou observação sobre o vídeo" className="mt-1.5" />
+                  </div>
+                  <Button type="button" onClick={addVideo} className="rounded-full bg-primary hover:bg-primary/90">
+                    Adicionar vídeo
+                  </Button>
+                  <div className="space-y-2">
+                    {(info.videos || []).map((video) => (
+                      <div key={video.id} className="flex items-start justify-between gap-3 rounded-lg border border-border bg-secondary/50 p-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm">{video.title}</p>
+                          <p className="text-xs text-muted-foreground break-all">{video.url}</p>
+                          {video.description && <p className="text-xs text-muted-foreground mt-1">{video.description}</p>}
+                        </div>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => removeVideo(video.id)} className="rounded-full text-destructive shrink-0">
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
               <Button type="submit" disabled={savingInfo} data-testid="church-info-save-button" className="rounded-full bg-primary hover:bg-primary/90">
                 {savingInfo ? "Salvando..." : "Salvar alterações"}

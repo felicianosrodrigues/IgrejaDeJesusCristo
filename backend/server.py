@@ -67,8 +67,15 @@ def set_auth_cookies(response: Response, user_id: str):
 
 
 def public_user(user: dict) -> dict:
-    return {"id": user["id"], "name": user["name"], "email": user["email"],
-            "role": user["role"], "created_at": user["created_at"]}
+    return {
+        "id": user["id"],
+        "name": user["name"],
+        "email": user["email"],
+        "role": user["role"],
+        "created_at": user["created_at"],
+        "address": user.get("address", ""),
+        "birthday": user.get("birthday", ""),
+    }
 
 
 # ---------- Schemas ----------
@@ -122,6 +129,29 @@ class ChurchInfoIn(BaseModel):
     cnpj: str = Field(max_length=30)
     addresses: List[str] = Field(default_factory=list)
     instructions: Optional[str] = Field(default="", max_length=1000)
+    videos: List[dict] = Field(default_factory=list)
+
+
+class ProfileUpdateIn(BaseModel):
+    address: Optional[str] = Field(default="", max_length=200)
+    birthday: Optional[str] = Field(default="", max_length=20)
+
+
+class AdminUserUpdateIn(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=2, max_length=80)
+    email: Optional[EmailStr] = None
+    role: Optional[Literal["member", "admin"]] = None
+    address: Optional[str] = Field(default=None, max_length=200)
+    birthday: Optional[str] = Field(default=None, max_length=20)
+
+
+class AdminUserCreateIn(BaseModel):
+    name: str = Field(min_length=2, max_length=80)
+    email: EmailStr
+    password: str = Field(min_length=6, max_length=100)
+    role: Literal["member", "admin"] = "member"
+    address: Optional[str] = Field(default="", max_length=200)
+    birthday: Optional[str] = Field(default="", max_length=20)
 
 
 # ---------- Auth ----------
@@ -196,6 +226,74 @@ async def logout(response: Response):
 @api_router.get("/auth/me")
 async def me(user: dict = Depends(get_current_user)):
     return public_user(user)
+
+
+@api_router.put("/auth/profile")
+async def update_profile(data: ProfileUpdateIn, user: dict = Depends(get_current_user)):
+    update_data = {}
+    if data.address is not None:
+        update_data["address"] = data.address.strip()
+    if data.birthday is not None:
+        update_data["birthday"] = data.birthday
+
+    if update_data:
+        await db.users.update_one({"id": user["id"]}, {"$set": update_data})
+
+    refreshed = await db.users.find_one({"id": user["id"]}, {"_id": 0})
+    return public_user(refreshed)
+
+
+@api_router.get("/admin/users")
+async def admin_users(admin: dict = Depends(require_admin)):
+    users = await db.users.find({}, {"_id": 0}).sort("created_at", 1).to_list(1000)
+    return [public_user(user) for user in users]
+
+
+@api_router.post("/admin/users")
+async def create_user_by_admin(data: AdminUserCreateIn, admin: dict = Depends(require_admin)):
+    email = str(data.email).lower()
+    if await db.users.find_one({"email": email}):
+        raise HTTPException(400, "Este email já está cadastrado")
+
+    user = {
+        "id": str(uuid.uuid4()),
+        "name": data.name.strip(),
+        "email": email,
+        "password_hash": hash_password(data.password),
+        "role": data.role,
+        "created_at": utcnow().isoformat(),
+        "address": data.address.strip() if data.address else "",
+        "birthday": data.birthday or "",
+    }
+    await db.users.insert_one(user)
+    return public_user(user)
+
+
+@api_router.put("/admin/users/{user_id}")
+async def update_user_by_admin(user_id: str, data: AdminUserUpdateIn, admin: dict = Depends(require_admin)):
+    update_data = {}
+    if data.name is not None:
+        update_data["name"] = data.name.strip()
+    if data.email is not None:
+        email = str(data.email).lower()
+        existing = await db.users.find_one({"email": email, "id": {"$ne": user_id}})
+        if existing:
+            raise HTTPException(400, "Este email já está cadastrado")
+        update_data["email"] = email
+    if data.role is not None:
+        update_data["role"] = data.role
+    if data.address is not None:
+        update_data["address"] = data.address.strip()
+    if data.birthday is not None:
+        update_data["birthday"] = data.birthday
+
+    if not update_data:
+        existing = await db.users.find_one({"id": user_id}, {"_id": 0})
+        return public_user(existing)
+
+    await db.users.update_one({"id": user_id}, {"$set": update_data})
+    refreshed = await db.users.find_one({"id": user_id}, {"_id": 0})
+    return public_user(refreshed)
 
 
 @api_router.post("/auth/refresh")
@@ -434,9 +532,12 @@ async def startup():
             "pix_key": "contribuir@comunidadedafe.com.br", "bank_name": "Banco do Brasil",
             "agency": "0001-X", "account": "12345-6", "holder": "Igreja Comunidade da Fé",
             "cnpj": "00.000.000/0001-00", "addresses": default_addresses,
-            "instructions": "Após a transferência, registre sua contribuição no formulário ao lado para que a tesouraria confirme o recebimento."})
+            "instructions": "Após a transferência, registre sua contribuição no formulário ao lado para que a tesouraria confirme o recebimento.",
+            "videos": []})
     elif "addresses" not in info:
         await db.settings.update_one({"id": "church_info"}, {"$set": {"addresses": default_addresses}})
+    elif "videos" not in info:
+        await db.settings.update_one({"id": "church_info"}, {"$set": {"videos": []}})
 
     if await db.events.count_documents({}) == 0:
         today = utcnow().date()

@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Church, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import logoIgreja from "../assets/logo_igreja.png";
 
 const links = [
   { to: "/", label: "Início", end: true },
@@ -16,18 +17,20 @@ export function Navbar() {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/login");
+    navigate("/", { replace: true });
   };
 
   return (
     <header className="fixed top-0 inset-x-0 z-40 bg-card border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-6">
         <NavLink to="/" data-testid="nav-logo" className="flex items-center gap-2 shrink-0">
-          <span className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-            <Church size={18} />
-          </span>
+          <img
+            src={logoIgreja}
+            alt="Logo da Igreja"
+            className="h-9 w-9 rounded-full object-cover border border-border"
+          />
           <span className="font-display text-xl font-semibold tracking-tight text-primary hidden sm:block">
-            Comunidade da Fé
+            Igreja de Jesus Cristo
           </span>
         </NavLink>
         <nav className="flex-1 flex items-center gap-1 overflow-x-auto">

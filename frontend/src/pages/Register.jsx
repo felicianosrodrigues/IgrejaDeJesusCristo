@@ -26,7 +26,7 @@ export default function Register() {
     try {
       const { data } = await api.post("/auth/register", { name, email, password });
       setUser(data);
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (err) {
       setError(formatApiError(err, "Não foi possível criar a conta."));
     } finally {
@@ -40,7 +40,7 @@ export default function Register() {
         <img src={AUTH_BG} alt="Comunidade reunida em oração" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute bottom-12 left-12 right-12 text-white">
-          <p className="overline-label !text-white/70">Comunidade da Fé</p>
+          <p className="overline-label !text-white/70">Igreja de Jesus Cristo</p>
           <h1 className="font-display text-4xl lg:text-5xl font-semibold mt-3 leading-tight">
             Faça parte da nossa família em Cristo.
           </h1>
@@ -52,7 +52,7 @@ export default function Register() {
             <span className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
               <Church size={20} />
             </span>
-            <span className="font-display text-2xl font-semibold text-primary">Comunidade da Fé</span>
+            <span className="font-display text-2xl font-semibold text-primary">Igreja de Jesus Cristo</span>
           </div>
           <h2 className="font-display text-4xl font-semibold tracking-tight">Crie sua conta</h2>
           <p className="text-muted-foreground text-sm mt-2 mb-8">Cadastre-se para participar dos murais, agenda e contribuições.</p>
