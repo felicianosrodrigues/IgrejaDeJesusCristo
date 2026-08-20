@@ -1,12 +1,12 @@
 services:
   backend:
     build:
-      context: /artifacts/backend  # ← SOBE 2 NÍVEIS
+      context: ../../backend  # ← SOBE 2 NÍVEIS
       dockerfile: Dockerfile
     container_name: igreja-backend
     restart: unless-stopped
     env_file:
-      - /artifacts/.env.backend  # ← AJUSTA TAMBÉM
+      - ../../.env.backend  # ← AJUSTA TAMBÉM
     depends_on:
       mongo:
         condition: service_healthy
@@ -18,7 +18,7 @@ services:
 
   frontend:
     build:
-      context: /artifacts/frontend  # ← SOBE 2 NÍVEIS
+      context: ../../frontend  # ← SOBE 2 NÍVEIS
       dockerfile: Dockerfile
     container_name: igreja-frontend
     restart: unless-stopped
