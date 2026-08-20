@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /app/requirements.txt
+# Adicione isso antes do RUN pip install
+RUN apt-get update && apt-get install -y gcc libpq-dev
 RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -v -r /app/requirements.txt
 COPY . /app
 
