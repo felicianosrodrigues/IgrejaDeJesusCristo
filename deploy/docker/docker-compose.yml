@@ -18,8 +18,8 @@ services:
 
   frontend:
     build:
-      context: ./frontend  # ← SOBE 2 NÍVEIS
-      dockerfile: Dockerfile
+      context: ./  # ← SOBE 2 NÍVEIS
+      dockerfile: ./frontend/Dockerfile
     container_name: igreja-frontend
     restart: unless-stopped
     depends_on:
