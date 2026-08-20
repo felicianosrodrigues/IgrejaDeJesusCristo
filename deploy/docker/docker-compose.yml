@@ -18,8 +18,8 @@ services:
 
   frontend:
     build:
-      context: ./  # ← SOBE 2 NÍVEIS
-      dockerfile: ./frontend/Dockerfile
+    context: ./frontend     # <--- O Docker vai entrar na pasta frontend
+    dockerfile: Dockerfile   # <--- Não precisa do caminho, pois já está dentro
     container_name: igreja-frontend
     restart: unless-stopped
     depends_on:
