@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "sonner";
 import { api, formatApiError } from "../lib/api";
 import { Button } from "../components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 
@@ -67,9 +67,12 @@ export default function Testimonies() {
                 style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="w-9 h-9 rounded-full bg-accent/10 text-accent flex items-center justify-center">
-                    <Sparkles size={16} />
-                  </span>
+                  <Avatar className="h-9 w-9 border border-accent/10">
+                    <AvatarImage src={p.author_photo} alt={p.author_name} />
+                    <AvatarFallback className="bg-accent/10 text-accent text-sm font-bold">
+                      {p.author_name?.[0]?.toUpperCase() || "?"}
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
                     <p className="text-sm font-semibold">{p.author_name}</p>
                     <p className="text-xs text-muted-foreground">

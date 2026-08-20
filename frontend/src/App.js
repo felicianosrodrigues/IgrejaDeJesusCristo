@@ -8,6 +8,7 @@ import Register from "@/pages/Register";
 import Home from "@/pages/Home";
 import PrayerWall from "@/pages/PrayerWall";
 import Testimonies from "@/pages/Testimonies";
+import Devotionals from "@/pages/Devotionals";
 import Agenda from "@/pages/Agenda";
 import Contributions from "@/pages/Contributions";
 import Admin from "@/pages/Admin";
@@ -26,6 +27,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/oracao" element={<PrayerWall />} />
               <Route path="/testemunhos" element={<Testimonies />} />
+              <Route path="/devocionais" element={<Devotionals />} />
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/contribuicoes" element={<Contributions />} />
               <Route path="/admin" element={<Admin />} />

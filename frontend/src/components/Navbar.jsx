@@ -7,6 +7,7 @@ const links = [
   { to: "/", label: "Início", end: true },
   { to: "/oracao", label: "Mural de Oração" },
   { to: "/testemunhos", label: "Testemunhos" },
+  { to: "/devocionais", label: "Devocionais" },
   { to: "/agenda", label: "Agenda" },
   { to: "/contribuicoes", label: "Contribuições" },
 ];

@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const backendBaseUrl = process.env.REACT_APP_BACKEND_URL?.trim() || window.location.origin;
+
 export const api = axios.create({
-  baseURL: `${process.env.REACT_APP_BACKEND_URL}/api`,
+  baseURL: `${backendBaseUrl}/api`,
   withCredentials: true,
 });
 

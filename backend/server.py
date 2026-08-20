@@ -112,14 +112,54 @@ def set_auth_cookies(response: Response, user_id: str):
 
 
 def public_user(user: dict) -> dict:
+    address = user.get("address", "")
+    if not address:
+        address = compose_address(user)
     return {
         "id": user["id"],
         "name": user["name"],
         "email": user["email"],
         "role": user["role"],
         "created_at": user["created_at"],
-        "address": user.get("address", ""),
+        "address": address,
+        "cep": user.get("cep", ""),
+        "rua": user.get("rua", ""),
+        "numero": user.get("numero", ""),
+        "complemento": user.get("complemento", ""),
+        "bairro": user.get("bairro", ""),
+        "cidade": user.get("cidade", ""),
+        "estado": user.get("estado", ""),
         "birthday": user.get("birthday", ""),
+        "photo_url": user.get("photo_url", ""),
+    }
+
+
+def compose_address(user: dict) -> str:
+    cep = (user.get("cep") or "").strip()
+    rua = (user.get("rua") or "").strip()
+    numero = (user.get("numero") or "").strip()
+    complemento = (user.get("complemento") or "").strip()
+    bairro = (user.get("bairro") or "").strip()
+    cidade = (user.get("cidade") or "").strip()
+    estado = (user.get("estado") or "").strip()
+
+    line1 = ", ".join([part for part in [rua, numero] if part])
+    line2 = ", ".join([part for part in [complemento, bairro, cidade, estado] if part])
+    parts = [part for part in [line1, line2] if part]
+    if cep:
+        parts.append(f"CEP {cep}")
+    return " - ".join(parts)
+
+
+def build_address_data(data: dict) -> dict:
+    return {
+        "cep": (data.get("cep") or "").strip(),
+        "rua": (data.get("rua") or "").strip(),
+        "numero": (data.get("numero") or "").strip(),
+        "complemento": (data.get("complemento") or "").strip(),
+        "bairro": (data.get("bairro") or "").strip(),
+        "cidade": (data.get("cidade") or "").strip(),
+        "estado": (data.get("estado") or "").strip(),
     }
 
 
@@ -128,6 +168,14 @@ class RegisterIn(BaseModel):
     name: str = Field(min_length=2, max_length=80)
     email: EmailStr
     password: str = Field(min_length=6, max_length=100)
+    photo_url: Optional[str] = Field(default="", max_length=2000000)
+    cep: Optional[str] = Field(default="", max_length=20)
+    rua: Optional[str] = Field(default="", max_length=120)
+    numero: Optional[str] = Field(default="", max_length=20)
+    complemento: Optional[str] = Field(default="", max_length=120)
+    bairro: Optional[str] = Field(default="", max_length=80)
+    cidade: Optional[str] = Field(default="", max_length=80)
+    estado: Optional[str] = Field(default="", max_length=40)
 
 
 class LoginIn(BaseModel):
@@ -139,6 +187,11 @@ class PostIn(BaseModel):
     type: Literal["prayer", "testimony"]
     title: str = Field(min_length=3, max_length=120)
     content: str = Field(min_length=5, max_length=2000)
+
+
+class DevotionalIn(BaseModel):
+    title: str = Field(min_length=3, max_length=120)
+    content: str = Field(min_length=5, max_length=5000)
 
 
 class ContributionIn(BaseModel):
@@ -178,8 +231,15 @@ class ChurchInfoIn(BaseModel):
 
 
 class ProfileUpdateIn(BaseModel):
-    address: Optional[str] = Field(default="", max_length=200)
+    cep: Optional[str] = Field(default="", max_length=20)
+    rua: Optional[str] = Field(default="", max_length=120)
+    numero: Optional[str] = Field(default="", max_length=20)
+    complemento: Optional[str] = Field(default="", max_length=120)
+    bairro: Optional[str] = Field(default="", max_length=80)
+    cidade: Optional[str] = Field(default="", max_length=80)
+    estado: Optional[str] = Field(default="", max_length=40)
     birthday: Optional[str] = Field(default="", max_length=20)
+    photo_url: Optional[str] = Field(default="", max_length=2000000)
 
 
 class ForgotPasswordIn(BaseModel):
@@ -196,8 +256,15 @@ class AdminUserUpdateIn(BaseModel):
     name: Optional[str] = Field(default=None, min_length=2, max_length=80)
     email: Optional[EmailStr] = None
     role: Optional[Literal["member", "admin"]] = None
-    address: Optional[str] = Field(default=None, max_length=200)
+    cep: Optional[str] = Field(default=None, max_length=20)
+    rua: Optional[str] = Field(default=None, max_length=120)
+    numero: Optional[str] = Field(default=None, max_length=20)
+    complemento: Optional[str] = Field(default=None, max_length=120)
+    bairro: Optional[str] = Field(default=None, max_length=80)
+    cidade: Optional[str] = Field(default=None, max_length=80)
+    estado: Optional[str] = Field(default=None, max_length=40)
     birthday: Optional[str] = Field(default=None, max_length=20)
+    photo_url: Optional[str] = Field(default=None, max_length=2000000)
     password: Optional[str] = Field(default=None, min_length=6, max_length=100)
 
 
@@ -206,8 +273,15 @@ class AdminUserCreateIn(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6, max_length=100)
     role: Literal["member", "admin"] = "member"
-    address: Optional[str] = Field(default="", max_length=200)
+    cep: Optional[str] = Field(default="", max_length=20)
+    rua: Optional[str] = Field(default="", max_length=120)
+    numero: Optional[str] = Field(default="", max_length=20)
+    complemento: Optional[str] = Field(default="", max_length=120)
+    bairro: Optional[str] = Field(default="", max_length=80)
+    cidade: Optional[str] = Field(default="", max_length=80)
+    estado: Optional[str] = Field(default="", max_length=40)
     birthday: Optional[str] = Field(default="", max_length=20)
+    photo_url: Optional[str] = Field(default="", max_length=2000000)
 
 
 # ---------- Auth ----------
@@ -237,14 +311,24 @@ async def require_admin(user: dict = Depends(get_current_user)) -> dict:
     return user
 
 
+async def _author_photo_urls(author_ids: list[str]) -> dict:
+    if not author_ids:
+        return {}
+    users = await db.users.find({"id": {"$in": author_ids}}, {"_id": 0, "id": 1, "photo_url": 1}).to_list(1000)
+    return {user["id"]: user.get("photo_url", "") for user in users}
+
+
 @api_router.post("/auth/register")
 async def register(data: RegisterIn, response: Response):
     email = data.email.lower()
     if await db.users.find_one({"email": email}):
         raise HTTPException(400, "Este email já está cadastrado")
+    address_data = build_address_data(data.model_dump())
     user = {"id": str(uuid.uuid4()), "name": data.name.strip(), "email": email,
             "password_hash": hash_password(data.password), "role": "member",
-            "created_at": utcnow().isoformat()}
+            "created_at": utcnow().isoformat(), "photo_url": data.photo_url.strip() if data.photo_url else "",
+            **address_data}
+    user["address"] = compose_address(user)
     await db.users.insert_one(user)
     set_auth_cookies(response, user["id"])
     return public_user(user)
@@ -324,10 +408,15 @@ async def me(user: dict = Depends(get_current_user)):
 @api_router.put("/auth/profile")
 async def update_profile(data: ProfileUpdateIn, user: dict = Depends(get_current_user)):
     update_data = {}
-    if data.address is not None:
-        update_data["address"] = data.address.strip()
+    provided = data.model_dump(exclude_unset=True)
+    address_data = build_address_data(provided)
+    update_data.update({key: value for key, value in address_data.items() if key in provided})
     if data.birthday is not None:
         update_data["birthday"] = data.birthday
+    if data.photo_url is not None:
+        update_data["photo_url"] = data.photo_url.strip()
+    composed_address = compose_address({**user, **update_data})
+    update_data["address"] = composed_address or user.get("address", "")
 
     if update_data:
         await db.users.update_one({"id": user["id"]}, {"$set": update_data})
@@ -347,6 +436,7 @@ async def create_user_by_admin(data: AdminUserCreateIn, admin: dict = Depends(re
     email = str(data.email).lower()
     if await db.users.find_one({"email": email}):
         raise HTTPException(400, "Este email já está cadastrado")
+    address_data = build_address_data(data.model_dump())
 
     user = {
         "id": str(uuid.uuid4()),
@@ -355,9 +445,11 @@ async def create_user_by_admin(data: AdminUserCreateIn, admin: dict = Depends(re
         "password_hash": hash_password(data.password),
         "role": data.role,
         "created_at": utcnow().isoformat(),
-        "address": data.address.strip() if data.address else "",
         "birthday": data.birthday or "",
+        "photo_url": data.photo_url.strip() if data.photo_url else "",
+        **address_data,
     }
+    user["address"] = compose_address(user)
     await db.users.insert_one(user)
     return public_user(user)
 
@@ -375,12 +467,18 @@ async def update_user_by_admin(user_id: str, data: AdminUserUpdateIn, admin: dic
         update_data["email"] = email
     if data.role is not None:
         update_data["role"] = data.role
-    if data.address is not None:
-        update_data["address"] = data.address.strip()
+    provided = data.model_dump(exclude_unset=True)
+    address_data = build_address_data(provided)
+    update_data.update({key: value for key, value in address_data.items() if key in provided})
     if data.birthday is not None:
         update_data["birthday"] = data.birthday
+    if data.photo_url is not None:
+        update_data["photo_url"] = data.photo_url.strip()
     if data.password is not None:
         update_data["password_hash"] = hash_password(data.password)
+    if any(field in provided for field in ["cep", "rua", "numero", "complemento", "bairro", "cidade", "estado"]):
+        existing = await db.users.find_one({"id": user_id}, {"_id": 0})
+        update_data["address"] = compose_address({**existing, **update_data})
 
     if not update_data:
         existing = await db.users.find_one({"id": user_id}, {"_id": 0})
@@ -414,17 +512,22 @@ async def refresh(request: Request, response: Response):
 async def create_post(data: PostIn, user: dict = Depends(get_current_user)):
     post = {"id": str(uuid.uuid4()), "type": data.type, "title": data.title.strip(),
             "content": data.content.strip(), "author_id": user["id"], "author_name": user["name"],
-            "status": "pending", "prayed_by": [], "created_at": utcnow().isoformat()}
+            "author_photo": user.get("photo_url", ""), "status": "pending", "prayed_by": [],
+            "created_at": utcnow().isoformat()}
     await db.posts.insert_one(post)
     post.pop("_id", None)
     return post
 
 
 @api_router.get("/posts")
-async def list_posts(type: Literal["prayer", "testimony"]):
+async def list_posts(type: Literal["prayer", "testimony", "devotional"]):
     posts = await db.posts.find({"type": type, "status": "approved"}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    author_ids = [p.get("author_id") for p in posts if p.get("author_id")]
+    photo_urls = await _author_photo_urls(list(dict.fromkeys(author_ids)))
     for p in posts:
         p["pray_count"] = len(p.get("prayed_by", []))
+        if p.get("author_id"):
+            p["author_photo"] = photo_urls.get(p["author_id"], p.get("author_photo", ""))
     return posts
 
 
@@ -519,6 +622,41 @@ async def reject_post(post_id: str, admin: dict = Depends(require_admin)):
 @api_router.delete("/admin/posts/{post_id}")
 async def delete_post(post_id: str, admin: dict = Depends(require_admin)):
     await db.posts.delete_one({"id": post_id})
+    return {"ok": True}
+
+
+# ---------- Devocionais ----------
+@api_router.get("/admin/devotionals")
+async def admin_devotionals(admin: dict = Depends(require_admin)):
+    return await db.posts.find({"type": "devotional"}, {"_id": 0}).sort("created_at", -1).to_list(500)
+
+
+@api_router.post("/admin/devotionals")
+async def create_devotional(data: DevotionalIn, admin: dict = Depends(require_admin)):
+    dev = {"id": str(uuid.uuid4()), "type": "devotional", "title": data.title.strip(),
+           "content": data.content.strip(), "author_id": admin["id"], "author_name": admin["name"],
+           "author_photo": admin.get("photo_url", ""), "status": "approved", "prayed_by": [],
+           "created_at": utcnow().isoformat()}
+    await db.posts.insert_one(dev)
+    dev.pop("_id", None)
+    return dev
+
+
+@api_router.put("/admin/devotionals/{devotional_id}")
+async def update_devotional(devotional_id: str, data: DevotionalIn, admin: dict = Depends(require_admin)):
+    res = await db.posts.update_one(
+        {"id": devotional_id, "type": "devotional"},
+        {"$set": {"title": data.title.strip(), "content": data.content.strip()}},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(404, "Devocional não encontrado")
+    updated = await db.posts.find_one({"id": devotional_id}, {"_id": 0})
+    return updated
+
+
+@api_router.delete("/admin/devotionals/{devotional_id}")
+async def delete_devotional(devotional_id: str, admin: dict = Depends(require_admin)):
+    await db.posts.delete_one({"id": devotional_id, "type": "devotional"})
     return {"ok": True}
 
 

@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { HeartHandshake, Sparkles, Landmark, Copy, ArrowRight, Clock, MapPin, Instagram, Youtube, ExternalLink, CalendarDays, Home as HomeIcon } from "lucide-react";
+import { HeartHandshake, Sparkles, Landmark, Copy, ArrowRight, Clock, MapPin, Instagram, Youtube, ExternalLink, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { api, formatApiError } from "../lib/api";
-
-const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
 const getVideoThumbnail = (url) => {
   if (!url) return null;
@@ -16,13 +14,21 @@ const getVideoThumbnail = (url) => {
   return null;
 };
 
+const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
 const socialLinks = [
   {
     href: "https://www.instagram.com/igrejadejesuscristo_vespasiano/",
     label: "Instagram",
     description: "Acompanhe nossos bastidores e novidades",
     icon: Instagram,
-  }
+  },
+  {
+    href: "https://www.youtube.com/@IgrejadeJesusCristoVespasiano",
+    label: "YouTube",
+    description: "Assista cultos, mensagens e vídeos especiais",
+    icon: Youtube,
+  },
 ];
 
 const quickLinks = [
@@ -33,13 +39,12 @@ const quickLinks = [
 ];
 
 export default function Home() {
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
   const [events, setEvents] = useState([]);
   const [prayers, setPrayers] = useState([]);
   const [testimonies, setTestimonies] = useState([]);
   const [info, setInfo] = useState(null);
-  const [profileForm, setProfileForm] = useState({ address: "", birthday: "" });
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const pixQrUrl = "/pix-qrcode.png";
 
   useEffect(() => {
     api.get("/events").then((r) => setEvents(r.data.slice(0, 4))).catch(() => {});
@@ -47,26 +52,6 @@ export default function Home() {
     api.get("/posts", { params: { type: "testimony" } }).then((r) => setTestimonies(r.data.slice(0, 3))).catch(() => {});
     api.get("/church-info").then((r) => setInfo(r.data)).catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (user) {
-      setProfileForm({ address: user.address || "", birthday: user.birthday || "" });
-    }
-  }, [user]);
-
-  const handleProfileSave = async (event) => {
-    event.preventDefault();
-    setIsSavingProfile(true);
-    try {
-      const response = await api.put("/auth/profile", profileForm);
-      setUser(response.data);
-      toast.success("Dados atualizados com sucesso");
-    } catch (error) {
-      toast.error(formatApiError(error, "Não foi possível salvar seus dados."));
-    } finally {
-      setIsSavingProfile(false);
-    }
-  };
 
   const copyPix = () => {
     if (!info?.pix_key) return;
@@ -155,62 +140,6 @@ export default function Home() {
           </Link>
         ))}
       </section>
-
-      {user && (
-        <section className="mt-8" data-testid="home-profile-section">
-          <div className="feed-card">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="overline-label">Seu perfil</p>
-                <h2 className="mt-1 font-display text-2xl font-semibold">Atualize seus dados</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Adicione seu endereço e data de aniversário para manter seu cadastro sempre atualizado.
-                </p>
-              </div>
-              <div className="rounded-full bg-primary/10 p-2 text-primary">
-                <HomeIcon size={18} />
-              </div>
-            </div>
-
-            <form onSubmit={handleProfileSave} className="mt-6 grid gap-4 md:grid-cols-2">
-              <label className="space-y-2 text-sm">
-                <span className="flex items-center gap-2 font-medium text-foreground">
-                  <HomeIcon size={14} /> Endereço
-                </span>
-                <input
-                  type="text"
-                  value={profileForm.address}
-                  onChange={(event) => setProfileForm((current) => ({ ...current, address: event.target.value }))}
-                  placeholder="Rua, número, bairro"
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                />
-              </label>
-
-              <label className="space-y-2 text-sm">
-                <span className="flex items-center gap-2 font-medium text-foreground">
-                  <CalendarDays size={14} /> Data de aniversário
-                </span>
-                <input
-                  type="date"
-                  value={profileForm.birthday}
-                  onChange={(event) => setProfileForm((current) => ({ ...current, birthday: event.target.value }))}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                />
-              </label>
-
-              <div className="md:col-span-2 flex justify-end">
-                <button
-                  type="submit"
-                  disabled={isSavingProfile}
-                  className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                >
-                  {isSavingProfile ? "Salvando..." : "Salvar dados"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </section>
-      )}
 
       <section className="mt-10" data-testid="home-events-section">
         <div className="mb-6 flex items-end justify-between">
@@ -385,28 +314,6 @@ export default function Home() {
               </div>
             </div>
 
-            <a
-              href="https://www.youtube.com/@IgrejadeJesusCristoVespasiano"
-              target="_blank"
-              rel="noreferrer"
-              className="feed-card block group"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="overline-label">Vídeos</p>
-                  <h3 className="mt-2 font-semibold">Assista aos nossos conteúdos</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Acompanhe mensagens, cultos e momentos especiais no YouTube.
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-full bg-primary/10 p-2 text-primary">
-                  <Youtube size={18} />
-                </span>
-              </div>
-              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors duration-150 hover:bg-primary/90">
-                <Youtube size={16} /> Abrir no YouTube
-              </div>
-            </a>
           </div>
         </div>
       </section>
@@ -415,30 +322,42 @@ export default function Home() {
         <p className="overline-label">Generosidade</p>
         <h2 className="mt-1 mb-6 font-display text-3xl font-semibold">Contribua com a obra</h2>
         {info && (
-          <div className="feed-card flex flex-wrap items-center gap-6">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Landmark size={22} />
-            </span>
+          <div className="feed-card grid gap-6 md:grid-cols-[auto_1fr] md:items-center">
+            {pixQrUrl && (
+              <div className="flex flex-col items-center gap-3">
+                <img
+                  src={pixQrUrl}
+                  alt="QR code do PIX"
+                  className="h-40 w-40 rounded-2xl border border-border bg-white p-2"
+                />
+              </div>
+            )}
             <div className="min-w-[220px] flex-1">
+              <p className="text-sm font-semibold text-foreground">Associação Evangelica do Povo de Deus</p>
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Chave PIX</p>
               <p className="break-all font-semibold" data-testid="home-pix-key">{info.pix_key}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{info.bank_name} • Ag {info.agency} • Cc {info.account}</p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={copyPix}
-                data-testid="home-copy-pix-button"
-                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all duration-150 hover:bg-primary/90 active:scale-95"
-              >
-                <Copy size={14} /> Copiar chave
-              </button>
-              <Link
-                to="/contribuicoes"
-                data-testid="home-see-contributions-link"
-                className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold text-primary transition-colors duration-150 hover:bg-secondary"
-              >
-                Detalhes <ArrowRight size={14} />
-              </Link>
+              <p className="mt-1 text-xs text-muted-foreground">
+                CNPJ {info.cnpj || "—"} • {info.bank_name} • Ag {info.agency} • Cc {info.account}
+              </p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Escaneie o QR code para facilitar a contribuição pelo PIX.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  onClick={copyPix}
+                  data-testid="home-copy-pix-button"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all duration-150 hover:bg-primary/90 active:scale-95"
+                >
+                  <Copy size={14} /> Copiar chave
+                </button>
+                <Link
+                  to="/contribuicoes"
+                  data-testid="home-see-contributions-link"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold text-primary transition-colors duration-150 hover:bg-secondary"
+                >
+                  Detalhes <ArrowRight size={14} />
+                </Link>
+              </div>
             </div>
           </div>
         )}

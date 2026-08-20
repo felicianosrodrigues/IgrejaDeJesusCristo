@@ -107,6 +107,33 @@ class TestPosts:
         r = requests.get(f"{API}/posts", params={"type": "testimony"}, timeout=10)
         assert any(p["id"] == tid for p in r.json())
 
+    def test_devotional_admin_crud(self, admin_session):
+        r = admin_session.post(f"{API}/admin/devotionals", json={
+            "title": "TEST Devocional da Semana",
+            "content": "Este e um devocional de teste com conteudo suficiente para validacao publica."
+        })
+        assert r.status_code == 200, r.text
+        devotional = r.json()
+        assert devotional["type"] == "devotional"
+        devotional_id = devotional["id"]
+
+        r = requests.get(f"{API}/posts", params={"type": "devotional"}, timeout=10)
+        assert r.status_code == 200
+        assert any(p["id"] == devotional_id for p in r.json())
+
+        r = admin_session.put(f"{API}/admin/devotionals/{devotional_id}", json={
+            "title": "TEST Devocional Atualizado",
+            "content": "Este devocional atualizado continua com conteudo suficiente para aparecer na leitura publica."
+        })
+        assert r.status_code == 200, r.text
+        assert r.json()["title"] == "TEST Devocional Atualizado"
+
+        r = admin_session.delete(f"{API}/admin/devotionals/{devotional_id}")
+        assert r.status_code == 200
+
+        r = requests.get(f"{API}/posts", params={"type": "devotional"}, timeout=10)
+        assert not any(p["id"] == devotional_id for p in r.json())
+
 
 # ---------- Events / Suggestions ----------
 class TestEvents:

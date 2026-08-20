@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { api, formatApiError } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 
@@ -96,6 +97,7 @@ export default function PrayerWall() {
           ) : (
             posts.map((p, i) => {
               const praying = user ? p.prayed_by.includes(user.id) : false;
+              const initials = p.author_name?.[0]?.toUpperCase() || "?";
               return (
                 <article
                   key={p.id}
@@ -104,9 +106,12 @@ export default function PrayerWall() {
                   style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
                 >
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
-                      {p.author_name?.[0]?.toUpperCase()}
-                    </span>
+                    <Avatar className="h-9 w-9 border border-primary/10">
+                      <AvatarImage src={p.author_photo} alt={p.author_name} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
                     <div>
                       <p className="text-sm font-semibold">{p.author_name}</p>
                       <p className="text-xs text-muted-foreground">

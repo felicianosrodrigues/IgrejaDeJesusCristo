@@ -3,6 +3,8 @@ import { Navigate } from "react-router-dom";
 import { Check, X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "../lib/api";
+import { lookupCep, normalizeCep } from "../lib/cep";
+import { fileToDataUrl } from "../lib/image";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -27,12 +29,45 @@ export default function Admin() {
   const [info, setInfo] = useState(null);
   const [eventForm, setEventForm] = useState({ title: "", description: "", date: "", time: "", location: "" });
   const [editingUserId, setEditingUserId] = useState(null);
-  const [editingUserForm, setEditingUserForm] = useState({ name: "", email: "", role: "member", address: "", birthday: "", password: "" });
-  const [newUserForm, setNewUserForm] = useState({ name: "", email: "", password: "", role: "member", address: "", birthday: "" });
+  const [editingUserForm, setEditingUserForm] = useState({
+    name: "",
+    email: "",
+    role: "member",
+    cep: "",
+    rua: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
+    birthday: "",
+    photo_url: "",
+    password: "",
+  });
+  const [newUserForm, setNewUserForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "member",
+    cep: "",
+    rua: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
+    birthday: "",
+    photo_url: "",
+  });
   const [creatingUser, setCreatingUser] = useState(false);
   const [videoForm, setVideoForm] = useState({ title: "", url: "", description: "" });
   const [savingEvent, setSavingEvent] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
+  const [devotionals, setDevotionals] = useState([]);
+  const [devotionalForm, setDevotionalForm] = useState({ title: "", content: "" });
+  const [savingDevotional, setSavingDevotional] = useState(false);
+  const [editingDevotionalId, setEditingDevotionalId] = useState(null);
+  const [editingDevotionalForm, setEditingDevotionalForm] = useState({ title: "", content: "" });
 
   const loadAll = useCallback(() => {
     api.get("/admin/stats").then((r) => setStats(r.data)).catch(() => {});
@@ -42,6 +77,7 @@ export default function Admin() {
     api.get("/admin/contributions").then((r) => setContributions(r.data)).catch(() => {});
     api.get("/admin/users").then((r) => setUsers(r.data)).catch(() => {});
     api.get("/church-info").then((r) => setInfo(r.data || { addresses: [], videos: [] })).catch(() => {});
+    api.get("/admin/devotionals").then((r) => setDevotionals(r.data)).catch(() => {});
   }, []);
 
   useEffect(() => { loadAll(); }, [loadAll]);
@@ -130,15 +166,36 @@ export default function Admin() {
       name: user.name || "",
       email: user.email || "",
       role: user.role || "member",
-      address: user.address || "",
+      cep: user.cep || "",
+      rua: user.rua || "",
+      numero: user.numero || "",
+      complemento: user.complemento || "",
+      bairro: user.bairro || "",
+      cidade: user.cidade || "",
+      estado: user.estado || "",
       birthday: user.birthday || "",
+      photo_url: user.photo_url || "",
       password: "",
     });
   };
 
   const cancelEditingUser = () => {
     setEditingUserId(null);
-    setEditingUserForm({ name: "", email: "", role: "member", address: "", birthday: "", password: "" });
+    setEditingUserForm({
+      name: "",
+      email: "",
+      role: "member",
+      cep: "",
+      rua: "",
+      numero: "",
+      complemento: "",
+      bairro: "",
+      cidade: "",
+      estado: "",
+      birthday: "",
+      photo_url: "",
+      password: "",
+    });
   };
 
   const saveUser = async (id) => {
@@ -162,12 +219,68 @@ export default function Admin() {
     try {
       const response = await api.post("/admin/users", newUserForm);
       setUsers((current) => [...current, response.data]);
-      setNewUserForm({ name: "", email: "", password: "", role: "member", address: "", birthday: "" });
+      setNewUserForm({
+        name: "",
+        email: "",
+        password: "",
+        role: "member",
+        cep: "",
+        rua: "",
+        numero: "",
+        complemento: "",
+        bairro: "",
+        cidade: "",
+        estado: "",
+        birthday: "",
+        photo_url: "",
+      });
       toast.success("Usuário criado com sucesso.");
     } catch (err) {
       toast.error(formatApiError(err));
     } finally {
       setCreatingUser(false);
+    }
+  };
+
+  const handleNewUserCepLookup = async () => {
+    try {
+      if (normalizeCep(newUserForm.cep).length !== 8) return;
+      const result = await lookupCep(newUserForm.cep);
+      setNewUserForm((current) => ({ ...current, ...result }));
+    } catch (err) {
+      toast.error(err.message || "Não foi possível consultar o CEP.");
+    }
+  };
+
+  const handleEditingUserCepLookup = async () => {
+    try {
+      if (normalizeCep(editingUserForm.cep).length !== 8) return;
+      const result = await lookupCep(editingUserForm.cep);
+      setEditingUserForm((current) => ({ ...current, ...result }));
+    } catch (err) {
+      toast.error(err.message || "Não foi possível consultar o CEP.");
+    }
+  };
+
+  const handleNewUserPhotoChange = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      const photo_url = await fileToDataUrl(file);
+      setNewUserForm((current) => ({ ...current, photo_url }));
+    } catch (err) {
+      toast.error(err.message || "Não foi possível ler a imagem selecionada.");
+    }
+  };
+
+  const handleEditingUserPhotoChange = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      const photo_url = await fileToDataUrl(file);
+      setEditingUserForm((current) => ({ ...current, photo_url }));
+    } catch (err) {
+      toast.error(err.message || "Não foi possível ler a imagem selecionada.");
     }
   };
 
@@ -210,6 +323,52 @@ export default function Admin() {
     }
   };
 
+  const createDevotional = async (e) => {
+    e.preventDefault();
+    setSavingDevotional(true);
+    try {
+      const response = await api.post("/admin/devotionals", devotionalForm);
+      setDevotionals((current) => [response.data, ...current]);
+      setDevotionalForm({ title: "", content: "" });
+      toast.success("Devocional publicado.");
+    } catch (err) {
+      toast.error(formatApiError(err));
+    } finally {
+      setSavingDevotional(false);
+    }
+  };
+
+  const startEditingDevotional = (devotional) => {
+    setEditingDevotionalId(devotional.id);
+    setEditingDevotionalForm({ title: devotional.title || "", content: devotional.content || "" });
+  };
+
+  const cancelEditingDevotional = () => {
+    setEditingDevotionalId(null);
+    setEditingDevotionalForm({ title: "", content: "" });
+  };
+
+  const saveDevotional = async (id) => {
+    try {
+      const response = await api.put(`/admin/devotionals/${id}`, editingDevotionalForm);
+      setDevotionals((current) => current.map((d) => (d.id === id ? response.data : d)));
+      setEditingDevotionalId(null);
+      toast.success("Devocional atualizado.");
+    } catch (err) {
+      toast.error(formatApiError(err));
+    }
+  };
+
+  const deleteDevotional = async (id) => {
+    try {
+      await api.delete(`/admin/devotionals/${id}`);
+      setDevotionals((current) => current.filter((d) => d.id !== id));
+      toast.success("Devocional removido.");
+    } catch (err) {
+      toast.error(formatApiError(err));
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-10" data-testid="admin-page">
       <p className="overline-label">Painel</p>
@@ -234,6 +393,7 @@ export default function Admin() {
       <Tabs defaultValue="moderacao">
         <TabsList data-testid="admin-tabs" className="mb-6 flex-wrap h-auto gap-1">
           <TabsTrigger value="moderacao" data-testid="tab-moderacao">Moderação ({pendingPosts.length})</TabsTrigger>
+          <TabsTrigger value="devocionais" data-testid="tab-devocionais">Devocionais ({devotionals.length})</TabsTrigger>
           <TabsTrigger value="eventos" data-testid="tab-eventos">Eventos</TabsTrigger>
           <TabsTrigger value="sugestoes" data-testid="tab-sugestoes">Sugestões ({suggestions.filter((s) => s.status === "pending").length})</TabsTrigger>
           <TabsTrigger value="contribuicoes" data-testid="tab-contribuicoes">Contribuições</TabsTrigger>
@@ -273,6 +433,67 @@ export default function Admin() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="devocionais">
+          <div className="grid lg:grid-cols-3 gap-8">
+            <form onSubmit={createDevotional} className="rounded-2xl border border-border bg-card p-5 space-y-4" data-testid="devotional-form">
+              <h3 className="font-display text-xl font-semibold">Novo devocional</h3>
+              <div>
+                <Label>Título</Label>
+                <Input required minLength={3} value={devotionalForm.title} onChange={(e) => setDevotionalForm({ ...devotionalForm, title: e.target.value })} data-testid="devotional-title-input" className="mt-1.5" />
+              </div>
+              <div>
+                <Label>Conteúdo</Label>
+                <Textarea required minLength={5} rows={6} value={devotionalForm.content} onChange={(e) => setDevotionalForm({ ...devotionalForm, content: e.target.value })} data-testid="devotional-content-input" className="mt-1.5" />
+              </div>
+              <Button type="submit" disabled={savingDevotional} data-testid="devotional-submit-button" className="w-full rounded-full bg-primary hover:bg-primary/90">
+                {savingDevotional ? "Publicando..." : "Publicar devocional"}
+              </Button>
+            </form>
+            <div className="lg:col-span-2 space-y-3">
+              {devotionals.length === 0 ? (
+                <p className="text-muted-foreground text-sm" data-testid="admin-devotionals-empty">Nenhum devocional cadastrado.</p>
+              ) : (
+                devotionals.map((d) => (
+                  <div key={d.id} data-testid={`admin-devotional-${d.id}`} className="rounded-xl border border-border bg-card p-4">
+                    {editingDevotionalId === d.id ? (
+                      <div className="space-y-3">
+                        <div>
+                          <Label>Título</Label>
+                          <Input value={editingDevotionalForm.title} onChange={(e) => setEditingDevotionalForm({ ...editingDevotionalForm, title: e.target.value })} className="mt-1.5" />
+                        </div>
+                        <div>
+                          <Label>Conteúdo</Label>
+                          <Textarea rows={5} value={editingDevotionalForm.content} onChange={(e) => setEditingDevotionalForm({ ...editingDevotionalForm, content: e.target.value })} className="mt-1.5" />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => saveDevotional(d.id)} className="rounded-full bg-primary hover:bg-primary/90">Salvar</Button>
+                          <Button size="sm" variant="outline" onClick={cancelEditingDevotional} className="rounded-full">Cancelar</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold truncate">{d.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{fmtDate(d.created_at)}</p>
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{d.content}</p>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button size="sm" variant="outline" onClick={() => startEditingDevotional(d)} data-testid={`edit-devotional-${d.id}`} className="rounded-full">
+                            Editar
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => deleteDevotional(d.id)} data-testid={`delete-devotional-${d.id}`} className="rounded-full text-destructive">
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="eventos">
@@ -434,13 +655,69 @@ export default function Admin() {
                   <option value="admin">Administrador</option>
                 </select>
               </div>
-              <div>
-                <Label>Endereço</Label>
-                <Input value={newUserForm.address} onChange={(e) => setNewUserForm({ ...newUserForm, address: e.target.value })} className="mt-1.5" />
+              <div className="md:col-span-2 rounded-2xl border border-border/60 p-4">
+                <p className="text-sm font-medium mb-4">Endereço</p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>CEP</Label>
+                    <div className="mt-1.5 flex gap-2">
+                      <Input
+                        value={newUserForm.cep}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, cep: normalizeCep(e.target.value) })}
+                        onBlur={handleNewUserCepLookup}
+                        inputMode="numeric"
+                        maxLength={8}
+                      />
+                      <Button type="button" variant="outline" onClick={handleNewUserCepLookup} className="rounded-full">
+                        Buscar
+                      </Button>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Rua</Label>
+                    <Input value={newUserForm.rua} onChange={(e) => setNewUserForm({ ...newUserForm, rua: e.target.value })} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label>Número</Label>
+                    <Input value={newUserForm.numero} onChange={(e) => setNewUserForm({ ...newUserForm, numero: e.target.value })} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label>Complemento</Label>
+                    <Input value={newUserForm.complemento} onChange={(e) => setNewUserForm({ ...newUserForm, complemento: e.target.value })} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label>Bairro</Label>
+                    <Input value={newUserForm.bairro} onChange={(e) => setNewUserForm({ ...newUserForm, bairro: e.target.value })} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label>Cidade</Label>
+                    <Input value={newUserForm.cidade} onChange={(e) => setNewUserForm({ ...newUserForm, cidade: e.target.value })} className="mt-1.5" />
+                  </div>
+                  <div>
+                    <Label>Estado</Label>
+                    <Input value={newUserForm.estado} onChange={(e) => setNewUserForm({ ...newUserForm, estado: e.target.value })} className="mt-1.5" />
+                  </div>
+                </div>
               </div>
               <div>
                 <Label>Aniversário</Label>
                 <Input type="date" value={newUserForm.birthday} onChange={(e) => setNewUserForm({ ...newUserForm, birthday: e.target.value })} className="mt-1.5" />
+              </div>
+              <div>
+                <Label>Foto (arquivo opcional)</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleNewUserPhotoChange}
+                  className="mt-1.5"
+                />
+                {newUserForm.photo_url && (
+                  <img
+                    src={newUserForm.photo_url}
+                    alt="Pré-visualização da foto"
+                    className="mt-3 h-20 w-20 rounded-full object-cover border border-border"
+                  />
+                )}
               </div>
               <div className="md:col-span-2 flex justify-end">
                 <Button type="submit" disabled={creatingUser} className="rounded-full bg-primary hover:bg-primary/90">
@@ -498,13 +775,89 @@ export default function Admin() {
                             />
                           </div>
                         </div>
+                        <div className="rounded-2xl border border-border/60 p-4">
+                          <p className="text-sm font-medium mb-4">Endereço</p>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                              <Label>CEP</Label>
+                              <div className="mt-1.5 flex gap-2">
+                                <Input
+                                  value={editingUserForm.cep}
+                                  onChange={(e) => setEditingUserForm({ ...editingUserForm, cep: normalizeCep(e.target.value) })}
+                                  onBlur={handleEditingUserCepLookup}
+                                  inputMode="numeric"
+                                  maxLength={8}
+                                />
+                                <Button type="button" variant="outline" onClick={handleEditingUserCepLookup} className="rounded-full">
+                                  Buscar
+                                </Button>
+                              </div>
+                            </div>
+                            <div>
+                              <Label>Rua</Label>
+                              <Input
+                                value={editingUserForm.rua}
+                                onChange={(e) => setEditingUserForm({ ...editingUserForm, rua: e.target.value })}
+                                className="mt-1.5"
+                              />
+                            </div>
+                            <div>
+                              <Label>Número</Label>
+                              <Input
+                                value={editingUserForm.numero}
+                                onChange={(e) => setEditingUserForm({ ...editingUserForm, numero: e.target.value })}
+                                className="mt-1.5"
+                              />
+                            </div>
+                            <div>
+                              <Label>Complemento</Label>
+                              <Input
+                                value={editingUserForm.complemento}
+                                onChange={(e) => setEditingUserForm({ ...editingUserForm, complemento: e.target.value })}
+                                className="mt-1.5"
+                              />
+                            </div>
+                            <div>
+                              <Label>Bairro</Label>
+                              <Input
+                                value={editingUserForm.bairro}
+                                onChange={(e) => setEditingUserForm({ ...editingUserForm, bairro: e.target.value })}
+                                className="mt-1.5"
+                              />
+                            </div>
+                            <div>
+                              <Label>Cidade</Label>
+                              <Input
+                                value={editingUserForm.cidade}
+                                onChange={(e) => setEditingUserForm({ ...editingUserForm, cidade: e.target.value })}
+                                className="mt-1.5"
+                              />
+                            </div>
+                            <div>
+                              <Label>Estado</Label>
+                              <Input
+                                value={editingUserForm.estado}
+                                onChange={(e) => setEditingUserForm({ ...editingUserForm, estado: e.target.value })}
+                                className="mt-1.5"
+                              />
+                            </div>
+                          </div>
+                        </div>
                         <div>
-                          <Label>Endereço</Label>
+                          <Label>Foto (arquivo opcional)</Label>
                           <Input
-                            value={editingUserForm.address}
-                            onChange={(e) => setEditingUserForm({ ...editingUserForm, address: e.target.value })}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleEditingUserPhotoChange}
                             className="mt-1.5"
                           />
+                          {editingUserForm.photo_url && (
+                            <img
+                              src={editingUserForm.photo_url}
+                              alt="Pré-visualização da foto"
+                              className="mt-3 h-20 w-20 rounded-full object-cover border border-border"
+                            />
+                          )}
                         </div>
                         <div>
                           <Label>Nova senha</Label>

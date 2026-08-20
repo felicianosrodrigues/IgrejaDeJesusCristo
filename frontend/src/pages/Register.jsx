@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Church } from "lucide-react";
 import { api, formatApiError } from "../lib/api";
+import { fileToDataUrl } from "../lib/image";
+import { lookupCep, normalizeCep } from "../lib/cep";
 import { useAuth } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -16,6 +18,16 @@ export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [addressForm, setAddressForm] = useState({
+    cep: "",
+    rua: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    cidade: "",
+    estado: "",
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -24,13 +36,39 @@ export default function Register() {
     setError("");
     setLoading(true);
     try {
-      const { data } = await api.post("/auth/register", { name, email, password });
+      const { data } = await api.post("/auth/register", {
+        name,
+        email,
+        password,
+        photo_url: photoUrl,
+        ...addressForm,
+      });
       setUser(data);
       navigate("/", { replace: true });
     } catch (err) {
       setError(formatApiError(err, "Não foi possível criar a conta."));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      setPhotoUrl(await fileToDataUrl(file));
+    } catch (err) {
+      setError(err.message || "Não foi possível ler a imagem selecionada.");
+    }
+  };
+
+  const handleCepLookup = async () => {
+    try {
+      if (normalizeCep(addressForm.cep).length !== 8) return;
+      const result = await lookupCep(addressForm.cep);
+      setAddressForm((current) => ({ ...current, ...result }));
+    } catch (err) {
+      setError(err.message || "Não foi possível consultar o CEP.");
     }
   };
 
@@ -103,6 +141,105 @@ export default function Register() {
                 data-testid="register-password-input"
                 className="mt-1.5"
               />
+            </div>
+            <div>
+              <Label htmlFor="photo_url">Foto (arquivo opcional)</Label>
+              <Input
+                id="photo_url"
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                data-testid="register-photo-input"
+                className="mt-1.5"
+              />
+              {photoUrl && (
+                <img
+                  src={photoUrl}
+                  alt="Pré-visualização da foto"
+                  className="mt-3 h-20 w-20 rounded-full object-cover border border-border"
+                />
+              )}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 md:col-span-2">
+              <div>
+                <Label htmlFor="cep">CEP</Label>
+                <Input
+                  id="cep"
+                  value={addressForm.cep}
+                  onChange={(e) => setAddressForm((current) => ({ ...current, cep: normalizeCep(e.target.value) }))}
+                  onBlur={handleCepLookup}
+                  inputMode="numeric"
+                  maxLength={8}
+                  placeholder="00000000"
+                  data-testid="register-cep-input"
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="rua">Rua</Label>
+                <Input
+                  id="rua"
+                  value={addressForm.rua}
+                  onChange={(e) => setAddressForm((current) => ({ ...current, rua: e.target.value }))}
+                  data-testid="register-rua-input"
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="numero">Número</Label>
+                <Input
+                  id="numero"
+                  value={addressForm.numero}
+                  onChange={(e) => setAddressForm((current) => ({ ...current, numero: e.target.value }))}
+                  data-testid="register-numero-input"
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="complemento">Complemento</Label>
+                <Input
+                  id="complemento"
+                  value={addressForm.complemento}
+                  onChange={(e) => setAddressForm((current) => ({ ...current, complemento: e.target.value }))}
+                  data-testid="register-complemento-input"
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="bairro">Bairro</Label>
+                <Input
+                  id="bairro"
+                  value={addressForm.bairro}
+                  onChange={(e) => setAddressForm((current) => ({ ...current, bairro: e.target.value }))}
+                  data-testid="register-bairro-input"
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="cidade">Cidade</Label>
+                <Input
+                  id="cidade"
+                  value={addressForm.cidade}
+                  onChange={(e) => setAddressForm((current) => ({ ...current, cidade: e.target.value }))}
+                  data-testid="register-cidade-input"
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="estado">Estado</Label>
+                <Input
+                  id="estado"
+                  value={addressForm.estado}
+                  onChange={(e) => setAddressForm((current) => ({ ...current, estado: e.target.value }))}
+                  data-testid="register-estado-input"
+                  className="mt-1.5"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button type="button" variant="outline" onClick={handleCepLookup} className="rounded-full w-full">
+                  Buscar CEP
+                </Button>
+              </div>
             </div>
           </div>
 
