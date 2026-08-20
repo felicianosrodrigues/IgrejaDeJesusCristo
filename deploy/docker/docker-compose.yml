@@ -6,7 +6,7 @@ services:
     container_name: igreja-backend
     restart: unless-stopped
     env_file:
-      - ./.env.backend  # ← AJUSTA TAMBÉM
+      - ./.env # ← AJUSTA TAMBÉM
     depends_on:
       mongo:
         condition: service_healthy
