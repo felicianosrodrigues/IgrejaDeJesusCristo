@@ -1,10 +1,12 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-COPY package.json yarn.lock* ./
+# Mude para procurar dentro da pasta frontend
+COPY frontend/package.json frontend/yarn.lock* ./
 RUN yarn install --frozen-lockfile || yarn install
 
-COPY . .
+# Copie o resto da pasta frontend
+COPY frontend/ .
 RUN yarn build
 
 FROM nginx:1.27-alpine
