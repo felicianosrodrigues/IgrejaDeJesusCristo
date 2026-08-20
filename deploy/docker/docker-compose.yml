@@ -5,8 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: igreja-backend
     restart: unless-stopped
-    #env_file:
-    #   - ./.env # ← AJUSTA TAMBÉM
+    env_file:
+      - backend/.env
     depends_on:
       mongo:
         condition: service_healthy
