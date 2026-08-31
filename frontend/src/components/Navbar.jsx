@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { LogOut, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import logoIgreja from "../assets/logo_igreja.png";
 
@@ -17,6 +17,7 @@ export function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   const handleLogout = async () => {
     await logout();
@@ -26,6 +27,24 @@ export function Navbar() {
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        // Check if click is outside menu AND not on hamburger button
+        const hamburgerButton = event.target.closest('[aria-label="Abrir menu"]');
+        if (!hamburgerButton) {
+          setIsMobileMenuOpen(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <>
@@ -126,8 +145,8 @@ export function Navbar() {
 
       {/* Mobile Menu (escondido em desktop, expandido para baixo) */}
       {isMobileMenuOpen && (
-        <div className="md:hidden">
-          <div className="fixed left-0 right-top z-30 mt-16 w-full bg-card border-t border-border px-4 pb-6 pt-2 shadow-lg">
+        <div className="md:hidden" ref={menuRef}>
+          <div className="fixed left-0 right-0 top-[3.5rem] z-30 mt-0 w-full bg-card border-t border-border px-4 pb-6 pt-2 shadow-lg">
             <div className="space-y-2">
               {links.map((l) => (
                 <NavLink
@@ -135,6 +154,7 @@ export function Navbar() {
                   to={l.to}
                   end={l.end}
                   data-testid={`nav-link-mobile-${l.to === "/" ? "home" : l.to.slice(1)}`}
+                  onClick={toggleMobileMenu}
                   className={({ isActive }) =>
                     `block px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
                       isActive
@@ -149,6 +169,7 @@ export function Navbar() {
                 <NavLink
                   to="/admin"
                   data-testid="nav-link-admin-mobile"
+                  onClick={toggleMobileMenu}
                   className={({ isActive }) =>
                     `block px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
                       isActive
