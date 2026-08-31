@@ -109,8 +109,8 @@ export default function Home() {
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-100">Na igreja</p>
             <div className="mt-4 space-y-3">
               <div className="rounded-2xl bg-white/10 p-4">
-                <p className="text-sm font-semibold text-white">Cultos aos domingos</p>
-                <p className="mt-1 text-sm text-white/75">Experiências de adoração, palavra e comunhão.</p>
+                <p className="text-sm font-semibold text-white">Nossos Cultos</p>
+                <p className="mt-1 text-sm text-white/75">Cheios de adoração, palavra e comunhão.</p>
               </div>
               <div className="rounded-2xl bg-white/10 p-4">
                 <p className="text-sm font-semibold text-white">Oração e apoio</p>
