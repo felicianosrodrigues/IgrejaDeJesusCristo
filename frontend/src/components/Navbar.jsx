@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
+import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import logoIgreja from "../assets/logo_igreja.png";
 
@@ -15,15 +16,21 @@ const links = [
 export function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate("/", { replace: true });
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
   return (
     <header className="fixed top-0 inset-x-0 z-40 bg-card border-b border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        {/* Logo - sempre visível */}
         <NavLink to="/" data-testid="nav-logo" className="flex items-center gap-2 shrink-0">
           <img
             src={logoIgreja}
@@ -34,7 +41,22 @@ export function Navbar() {
             Igreja de Jesus Cristo
           </span>
         </NavLink>
-        <nav className="flex-1 flex items-center gap-1 overflow-x-auto">
+
+        {/* Botão hambúrguer (mobile apenas) */}
+        <button
+          onClick={toggleMobileMenu}
+          className="md:hidden p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+          aria-label="Abrir menu"
+        >
+          {isMobileMenuOpen ? (
+            <X size={20} className="block" />
+          ) : (
+            <Menu size={20} className="block" />
+          )}
+        </button>
+
+        {/* Navigation Desktop (escondido em mobile) */}
+        <nav className="hidden md:flex md:items-center md:flex-1 md:gap-1 md:overflow-x-auto">
           {links.map((l) => (
             <NavLink
               key={l.to}
@@ -46,8 +68,7 @@ export function Navbar() {
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                }`
-              }
+                }`}
             >
               {l.label}
             </NavLink>
@@ -61,37 +82,81 @@ export function Navbar() {
                   isActive
                     ? "bg-accent text-accent-foreground"
                     : "text-accent hover:bg-accent/10"
-                }`
-              }
+                }`}
             >
               Administração
             </NavLink>
           )}
         </nav>
-        <div className="flex items-center gap-3 shrink-0">
-          {user ? (
-            <>
-              <span data-testid="nav-user-name" className="text-sm text-muted-foreground hidden md:block">
-                {user.name}
-              </span>
-              <button
-                onClick={handleLogout}
-                data-testid="logout-button"
-                className="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors duration-150"
-                title="Sair"
-              >
-                <LogOut size={16} />
-              </button>
-            </>
-          ) : (
-            <NavLink
-              to="/login"
-              data-testid="nav-login-button"
-              className="px-4 py-2 rounded-full text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-150"
-            >
-              Entrar
-            </NavLink>
+
+        {/* Mobile Menu (escondido em desktop) */}
+        <nav className="md:hidden">
+          {isMobileMenuOpen && (
+            <div className="mt-4 space-y-2">
+              {links.map((l) => (
+                <NavLink
+                  key={l.to}
+                  to={l.to}
+                  end={l.end}
+                  data-testid={`nav-link-mobile-${l.to === "/" ? "home" : l.to.slice(1)}`}
+                  className={({ isActive }) =>
+                    `block px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    }`}
+                >
+                  {l.label}
+                </NavLink>
+              ))}
+              {user?.role === "admin" && (
+                <NavLink
+                  to="/admin"
+                  data-testid="nav-link-admin-mobile"
+                  className={({ isActive }) =>
+                    `block px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
+                      isActive
+                        ? "bg-accent text-accent-foreground"
+                        : "text-accent hover:bg-accent/10"
+                    }`}
+                >
+                  Administração
+                </NavLink>
+              )}
+            </div>
           )}
+        </nav>
+
+        {/* User actions (Desktop e Mobile) */}
+        <div className="flex items-center gap-3 shrink-0">
+          {/* User name (escondido em mobile quando menu fechado) */}
+          {!isMobileMenuOpen && user ? (
+            <span data-testid="nav-user-name" className="md:block text-sm text-muted-foreground">
+              {user.name}
+            </span>
+          ) : (
+            <>
+              {/* User name no mobile menu (quando aberto) */}
+              {isMobileMenuOpen && user && (
+                <div className="mb-4">
+                  <span className="block text-sm font-medium text-foreground">
+                    {user.name}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {user.role === "admin" ? "Administrador" : "Usuário"}
+                  </span>
+                </div>
+              )}
+            </>
+          )}
+          <button
+            onClick={handleLogout}
+            data-testid="logout-button"
+            className="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors duration-150"
+            title="Sair"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </header>
