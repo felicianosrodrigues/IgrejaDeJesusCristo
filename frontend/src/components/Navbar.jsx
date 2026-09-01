@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X, LogIn } from "lucide-react"; // Adicione LogIn aos imports
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import logoIgreja from "../assets/logo_igreja.png";
@@ -22,6 +22,10 @@ export function Navbar() {
   const handleLogout = async () => {
     await logout();
     navigate("/", { replace: true });
+  };
+
+  const handleLogin = () => {
+    navigate("/login");
   };
 
   const toggleMobileMenu = () => {
@@ -90,7 +94,8 @@ export function Navbar() {
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                }`}
+                }`
+              }
               >
                 {l.label}
               </NavLink>
@@ -104,7 +109,8 @@ export function Navbar() {
                     isActive
                       ? "bg-accent text-accent-foreground"
                       : "text-accent hover:bg-accent/10"
-                }`}
+                }`
+              }
               >
                 Administração
               </NavLink>
@@ -133,14 +139,27 @@ export function Navbar() {
                 )}
               </>
             )}
-            <button
-              onClick={handleLogout}
-              data-testid="logout-button"
-              className="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors duration-150"
-              title="Sair"
-            >
-              <LogOut size={16} />
-            </button>
+
+            {/* Botão de Logout ou Login - CORREÇÃO AQUI */}
+            {user ? (
+              <button
+                onClick={handleLogout}
+                data-testid="logout-button"
+                className="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors duration-150"
+                title="Sair"
+              >
+                <LogOut size={16} />
+              </button>
+            ) : (
+              <button
+                onClick={handleLogin}
+                data-testid="login-button"
+                className="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors duration-150"
+                title="Entrar"
+              >
+                <LogIn size={16} />
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -162,7 +181,8 @@ export function Navbar() {
                       isActive
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                    }`}
+                    }`
+                  }
                 >
                   {l.label}
                 </NavLink>
@@ -177,7 +197,8 @@ export function Navbar() {
                       isActive
                         ? "bg-accent text-accent-foreground"
                         : "text-accent hover:bg-accent/10"
-                    }`}
+                    }`
+                  }
                 >
                   Administração
                 </NavLink>
